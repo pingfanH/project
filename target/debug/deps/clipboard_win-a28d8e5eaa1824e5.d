@@ -1,0 +1,10 @@
+D:\project\RUST\project\target\debug\deps\clipboard_win-a28d8e5eaa1824e5.rmeta: C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\clipboard-win-3.1.1\src\lib.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\clipboard-win-3.1.1\src\formats.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\clipboard-win-3.1.1\src\raw.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\clipboard-win-3.1.1\src\dib.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\clipboard-win-3.1.1\src\image.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\clipboard-win-3.1.1\src\utils.rs
+
+D:\project\RUST\project\target\debug\deps\clipboard_win-a28d8e5eaa1824e5.d: C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\clipboard-win-3.1.1\src\lib.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\clipboard-win-3.1.1\src\formats.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\clipboard-win-3.1.1\src\raw.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\clipboard-win-3.1.1\src\dib.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\clipboard-win-3.1.1\src\image.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\clipboard-win-3.1.1\src\utils.rs
+
+C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\clipboard-win-3.1.1\src\lib.rs:
+C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\clipboard-win-3.1.1\src\formats.rs:
+C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\clipboard-win-3.1.1\src\raw.rs:
+C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\clipboard-win-3.1.1\src\dib.rs:
+C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\clipboard-win-3.1.1\src\image.rs:
+C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\clipboard-win-3.1.1\src\utils.rs:

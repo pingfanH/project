@@ -1,0 +1,142 @@
+
+import { HorizontalBox, Button } from "std-widgets.slint";
+import { ComboBox } from "std-widgets.slint";
+import { LineEdit } from "std-widgets.slint";
+import { setting } from "settinng.slint";
+import { list } from "list.slint";
+import "../assets/fonts/fangzheng.ttf";
+export component Select inherits ComboBox {
+
+        y: 30px;
+        width: self.preferred-width;
+        height: self.preferred-height;
+
+        current-value: "first";
+    
+}
+
+export component player{
+    Rectangle {
+        background: #0c325281;
+    }
+    Image {
+        source: @image-url("../assets/icon/music_list.svg");
+        width: 40px;
+        y: parent.height/2.8;
+        x: 40px;
+        //colorize: area.has-hover ? #cf2727 : #ffffff;
+        colorize: #ffffff;
+        animate colorize {
+            duration: 250ms;
+        }
+
+    }
+}
+export component search{
+    
+    area := TouchArea {}
+    Rectangle {
+        background: #0c325281;
+    }
+    Image {
+        source: @image-url("../assets/icon/search.svg");
+        width: 15px;
+        y: 15px;
+        x: 15px;
+        //colorize: area.has-hover ? #29292984 : #ffffff;
+        colorize: #ffffff;
+
+        // animate colorize {
+        //     duration: 250ms;
+        // }
+        
+    }
+    TextInput {
+        font-family: "方正少儿简体";
+        font-size: 25px;
+        width:  parent.width;
+        height: parent.height;
+        x:parent.width/5;
+        y:parent.height/6;
+    }
+
+
+}
+
+export component App inherits Window {
+    
+    preferred-width: 1000px;
+    preferred-height: 670px;
+    callback showsetting();
+    Rectangle {
+        background: @linear-gradient(125deg,#130c27 90%, #0f0c16 100%, #1c123a 100%,#1f1441 100%, #180446 100%);
+    }
+    list{
+        x:120px;
+        y: parent.height/2.1;
+    }
+    Image {
+        CloseArea := TouchArea {}
+        source: @image-url("../assets/icon/xmark.svg");
+        width: 25px;
+        y: 20px;
+        x: parent.width -60px;
+        
+       //colorize: CloseArea.has-hover ? #000000 : #dfdbdb;
+       colorize: #dfdbdb;
+
+
+        animate colorize {
+
+            duration: 100ms;
+        }
+        
+        
+    }
+    Image {
+        SettingArea := TouchArea {clicked => { popup.show(); }}
+        source: @image-url("../assets/icon/setting.svg");
+        width: 25px;
+        y: 22px;
+        x: parent.width -120px;
+        //colorize: SettingArea.has-hover ? #cf2727 : #ffffff;
+        colorize: #dfdbdb;
+        animate colorize {
+            duration: 100ms;
+        }
+        popup := PopupWindow {
+            Rectangle { height:100%; width: 100%; background: yellow; }
+            x: 20px; y: 20px; height: 50px; width: 50px;
+        }
+    
+
+
+
+
+    }
+    Image {
+        UserArea := TouchArea {}
+        source: @image-url("../assets/icon/user.svg");
+        width: 25px;
+        y: 22px;
+        x: parent.width -180px;
+        //colorize: UserArea.has-hover ? #cf2727 : #ffffff;
+        
+        colorize: #dfdbdb;
+        animate colorize {
+            duration: 100ms;
+        }
+
+    }
+    search{
+        y: 17px;
+        width: parent.width/5;
+        height: 44px;
+    }
+    player{
+        y: parent.height -100px;
+        width: parent.width -15px;
+        height: 90px;
+    }
+
+}

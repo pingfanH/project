@@ -1,0 +1,2 @@
+cargo:rerun-if-changed=C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\i-slint-compiler-1.1.1\widgets
+cargo:rustc-env=SLINT_WIDGETS_LIBRARY=D:\project\RUST\project\target\debug\build\i-slint-compiler-702e464779eefff0\out\included_library.rs

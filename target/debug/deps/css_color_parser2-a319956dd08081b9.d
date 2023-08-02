@@ -1,0 +1,10 @@
+D:\project\RUST\project\target\debug\deps\css_color_parser2-a319956dd08081b9.rmeta: C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\css-color-parser2-1.0.1\src\lib.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\css-color-parser2-1.0.1\src\color\mod.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\css-color-parser2-1.0.1\src\color\color.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\css-color-parser2-1.0.1\src\color\named_colors.rs
+
+D:\project\RUST\project\target\debug\deps\libcss_color_parser2-a319956dd08081b9.rlib: C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\css-color-parser2-1.0.1\src\lib.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\css-color-parser2-1.0.1\src\color\mod.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\css-color-parser2-1.0.1\src\color\color.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\css-color-parser2-1.0.1\src\color\named_colors.rs
+
+D:\project\RUST\project\target\debug\deps\css_color_parser2-a319956dd08081b9.d: C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\css-color-parser2-1.0.1\src\lib.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\css-color-parser2-1.0.1\src\color\mod.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\css-color-parser2-1.0.1\src\color\color.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\css-color-parser2-1.0.1\src\color\named_colors.rs
+
+C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\css-color-parser2-1.0.1\src\lib.rs:
+C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\css-color-parser2-1.0.1\src\color\mod.rs:
+C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\css-color-parser2-1.0.1\src\color\color.rs:
+C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\css-color-parser2-1.0.1\src\color\named_colors.rs:
