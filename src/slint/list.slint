@@ -1,7 +1,40 @@
+import { StandardListView,ListView  } from "std-widgets.slint";
+import {
+    ComboBox, VerticalBox, HorizontalBox, GridBox, Button,
+    LineEdit, ListView, GroupBox, CheckBox, TabWidget
+} from "std-widgets.slint";
+export component Example inherits Window {
+    width: 150px;
+    height: 150px;
+
+    StandardListView {
+
+        model: [ 
+        { text: "Blue"},
+        { text: "Red"}
+        ];
+        
+    }
+}
 export component list { 
     Rectangle {
-        width: 200px;
-        height: 460px;
-        background: #1f0c4d53;
+        Example{
+            width: parent.width;
+            height: parent.height;
+        }
     }
- }
+    
+}
+
+component Pane inherits Rectangle {
+    // capture all clicks
+    TouchArea {}
+}
+ export component BuildingPane inherits Pane {
+
+    VerticalBox {
+        ListView{
+
+        }
+    }
+}

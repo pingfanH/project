@@ -1,0 +1,43 @@
+import {
+    ComboBox, VerticalBox, HorizontalBox, GridBox, Button,
+    LineEdit, ListView, GroupBox, CheckBox, TabWidget
+} from "std-widgets.slint";
+
+export component user-main{ 
+    in-out property <string> user-name:"用户114514";
+    in-out property <string> user-avatar:"C:/Program Files/P-layer/data/user-avatar/avatar.png";
+    in-out property <string> user-intro:"好好好";
+    in-out property <string> user-gender:"男";
+    in-out property <string> user-age:"15";
+    in-out property <int> user-music-number:114;
+
+    y:0;
+    GridBox{
+    Row{
+        Image {
+        source: @image-url("C:/Program Files/P-layer/data/user-avatar/avatar.png");
+        width: 100px;
+        
+    }}
+    Row{
+        Text{
+        text:user-name;
+        font-size: 20px;
+        
+        horizontal-alignment: center;
+    }}
+    Row{    
+        Text{
+            text:"简介:"+user-intro;
+            font-size: 16px;
+            horizontal-alignment: center;
+        }}
+    Row{
+        Text{
+        text:"音乐数量:"+user-music-number;
+        font-size: 16px;
+        horizontal-alignment: center;
+    }}
+}
+
+}
