@@ -5,6 +5,8 @@ import { StyleMetrics } from "std-widgets.slint";
 
 component SideBarItem inherits Rectangle {
     callback clicked <=> touch.clicked;
+    callback click-audio;
+
     in-out property<string> text <=> label.text;
     in property<bool> selected;
     in property<bool> has-focus;
@@ -32,6 +34,7 @@ component SideBarItem inherits Rectangle {
     touch := TouchArea {
         width: 100%;
         height: 100%;
+        clicked => {root.click-audio()}
     }
 
     states [
@@ -52,6 +55,7 @@ component SideBarItem inherits Rectangle {
 
 export component SideBar inherits Rectangle {
     in property<[string]> model: [];
+    callback click-audio;
     out property<int> current-item: 0;
     in property<string> title <=> label.text;
     out property<int> current-focused: fs.has-focus ? fs.focused-tab : -1; // The currently focused tab
@@ -63,6 +67,11 @@ export component SideBar inherits Rectangle {
     accessible-delegate-focus: root.current-focused >= 0 ? root.current-focused : root.current-item;
 
     Rectangle {
+        Image {source: @image-url("../assets/icon/icon.png");
+        x: parent.width/5;
+        y: parent.height/89;
+        width: 20px;
+    }
         background: StyleMetrics.window-background.darker(0.2);
 
         fs := FocusScope {
@@ -114,7 +123,7 @@ export component SideBar inherits Rectangle {
                 has-focus: index == root.current-focused;
                 text: item;
                 selected: index == root.current-item;
-                clicked => { root.current-item = index; }
+                clicked => { root.current-item = index;click-audio();}
             }
         }
 
@@ -123,7 +132,7 @@ export component SideBar inherits Rectangle {
                 padding-left: StyleMetrics.layout-padding;
                 padding-right: StyleMetrics.layout-padding;
 
-                @children
+               @children
              }
         }
     }

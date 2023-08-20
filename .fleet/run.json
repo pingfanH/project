@@ -2,7 +2,12 @@
     "configurations": [
         {
             "type": "cargo",
-            "name": "ruu",
+            "name": "run-release",
+            "cargoArgs": ["run --release"],
+        },
+        {
+            "type": "cargo",
+            "name": "run-debug",
             "cargoArgs": ["run"],
         },
         {

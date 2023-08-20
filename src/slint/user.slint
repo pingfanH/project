@@ -2,42 +2,88 @@ import {
     ComboBox, VerticalBox, HorizontalBox, GridBox, Button,
     LineEdit, ListView, GroupBox, CheckBox, TabWidget
 } from "std-widgets.slint";
-
+export component edit { 
+    Button {
+        x:0;
+        y:0;
+        width: parent.width;
+        height: parent.height;
+    }
+    Text {
+        text: "编辑";
+        x:parent.width/3;
+        y:parent.height/4;
+    }
+}
 export component user-main{ 
     in-out property <string> user-name:"用户114514";
     in-out property <string> user-avatar:"C:/Program Files/P-layer/data/user-avatar/avatar.png";
-    in-out property <string> user-intro:"好好好";
-    in-out property <string> user-gender:"男";
-    in-out property <string> user-age:"15";
-    in-out property <int> user-music-number:114;
-
+    in-out property <string> user-intro:"简介";
+    in-out property <string> user-gender:"无";
+    in-out property <string> user-age:"xx";
+    in-out property <int> user-music-number:0;
     y:0;
-    GridBox{
-    Row{
-        Image {
+    edit{        
+        x:parent.width/2.49 +140px;
+        y: 90px;
+        width: 70px;
+        height: 30px;
+    }
+    Image{
         source: @image-url("C:/Program Files/P-layer/data/user-avatar/avatar.png");
-        width: 100px;
-        
-    }}
-    Row{
-        Text{
+        ListArea := TouchArea {}
+        width: ListArea.has-hover  ? 110px:100px;
+        x: ListArea.has-hover  ? parent.width/2.52:parent.width/2.49;
+        y:ListArea.has-hover  ? 80px:80px;
+        animate width,x,y {duration: 100ms;}    
+    }
+    Text{
         text:user-name;
+        horizontal-alignment: center;
+        TextArea := TouchArea {}
         font-size: 20px;
+        x: TextArea.has-hover  ? parent.width/2.3:parent.width/2.5;
+        y:200px;
+        animate font-size,x,y {duration: 100ms;}
+    }
+    Text{
+        text:"年龄:"+user-age;
+        horizontal-alignment: center;
+        Text1Area := TouchArea {}
+        font-size: 20px;
+        x: Text1Area.has-hover  ? parent.width/2.3:parent.width/2.5;
+        y:230px;
+        animate font-size,x,y {duration: 100ms;}
+    
+    }     
+    Text{
+        text:"性别:"+user-gender;
+        font-size: 20px;
+        horizontal-alignment: center;
+        Text2Area := TouchArea {}
+        x: Text2Area.has-hover  ? parent.width/2.3:parent.width/2.5;
+        y:260px;
+        animate font-size,x,y {duration: 100ms;}
+        }
+    Text{
+        text:"个人简介:"+user-intro;
+        font-size: 20px;
+        horizontal-alignment: center;
+        Text3Area := TouchArea {}
+        x: Text3Area.has-hover  ? parent.width/2.3:parent.width/2.5;
+        y:290px;
+        animate font-size,x,y {duration: 100ms;}
         
+    }
+    Text{
+        text:"收藏音乐数:"+user-music-number;
+        font-size: 20px;
         horizontal-alignment: center;
-    }}
-    Row{    
-        Text{
-            text:"简介:"+user-intro;
-            font-size: 16px;
-            horizontal-alignment: center;
-        }}
-    Row{
-        Text{
-        text:"音乐数量:"+user-music-number;
-        font-size: 16px;
-        horizontal-alignment: center;
-    }}
-}
+        Text4Area := TouchArea {}
+        x: Text4Area.has-hover  ? parent.width/2.3:parent.width/2.5;
+        y:320px;
+        animate font-size,x,y {duration: 100ms;}
+    }
 
 }
+

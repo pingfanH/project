@@ -4,14 +4,27 @@ import {
 } from "std-widgets.slint";
 
 export component homepage{ 
-    GridBox{
-        Row{
+    callback open-url(string);
             Image {
                source: @image-url("../assets/icon/icon.png");
                width: 100px;
-               
+               x: 70px;
+               y: 170px;
+               TouchArea { clicked => { root.open-url("https://github.com"); } }
             }
-        }
-    }
+            Text {
+                text:"P-LAYER";
+                x: 190px;
+                y: 187px;
+                font-size: 60px;
+                TouchArea { clicked => { root.open-url("https://github.com"); } }
+            }
+            Text {
+                text:"#made by pingfanh";
+                x: 140px;
+                y: 300px;
+                font-size: 30px;
+                TouchArea { clicked => { root.open-url("https://github.com"); } }
+            }
 
 }

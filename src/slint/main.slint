@@ -44,11 +44,54 @@ export component player{
         background: #4d4d4d81;
     }
     Image {
-        ListArea := TouchArea {}
+        ListArea := TouchArea {clicked => {values.click_audio1();}}
         source: @image-url("../assets/icon/music_list.svg");
+
         width: 40px;
         y: parent.height/3.2;
         x: 40px;
+
+        //colorize: ListArea.has-hover ? #cf2727 : #ffffff;
+        colorize: #ffffff;
+        animate colorize {
+            duration: 250ms;
+        }
+
+
+    }
+    Image {
+        visible: !values.is-playing;
+        PlayerArea := TouchArea { clicked => {
+            values.music_play();
+            values.is-playing=true;
+            values.click_audio();
+        
+        }}
+        source: @image-url("../assets/icon/play.svg");
+        width: 30px;
+        x:parent.width/2;
+        y:parent.height/3.5;
+        
+        //colorize: ListArea.has-hover ? #cf2727 : #ffffff;
+        colorize: #ffffff;
+        animate colorize {
+            duration: 250ms;
+        }
+
+
+    }
+    Image {
+        visible: values.is-playing;
+        PauseArea := TouchArea { clicked => {
+            values.music-pause();
+            values.is-playing=false;
+            values.click_audio();
+        
+        }}
+        source: @image-url("../assets/icon/pause.svg");
+        width: 25px;
+        x:parent.width/2;
+        y:parent.height/3.6;
         
         //colorize: ListArea.has-hover ? #cf2727 : #ffffff;
         colorize: #ffffff;
@@ -92,20 +135,51 @@ export component search{
 
 }
 
-export component AppWindow inherits Window {
+export global values {
     in-out property <bool> pane-visible:true;
-    no-frame: true;
+    in-out property <bool> is-playing: false;
+    in-out property <string> url:"https://space.bilibili.com/485727024?spm_id_from=333.1007.0.0";
+
     property <bool> drag-area-pressed: false;
     // 记录按下的位置
     property <length> drag-area-down-x: 0;
     property <length> drag-area-down-y: 0;
     
     callback music_play();
+    callback click_audio();
+    callback click_audio1();
+    callback music_pause();
     callback close-window();
     callback move-window(length, length);
 
-    property <bool> is-playing: false;
+}
 
+export component AppWindow inherits Window {
+    
+    in-out property <bool> pane-visible:true;
+    in-out property <bool> is-playing: false;
+    in-out property <string> url <=> values.url;
+    no-frame: true;
+    property <bool> drag-area-pressed: false;
+    // 记录按下的位置
+    property <length> drag-area-down-x: 0;
+    property <length> drag-area-down-y: 0;
+    
+    callback music_play<=> values.music_play;
+    callback click_audio<=> values.click_audio;
+    callback click_audio1<=> values.click_audio1;
+    callback open_the_url(string);
+    callback music_pause<=> values.music_pause;
+    callback close-window();
+    callback move-window(length, length);
+    in property <string> user_name:"pingfanh";
+    in property <string> user_intro:"开发人员";
+    in property <string> user_gender:"男";
+    in property <string> user_age:"15";
+    in property <int> user_music_number:114;
+
+    
+    title:"P-layer";
     Rectangle {
         x:0;
         y:0;
@@ -124,8 +198,6 @@ export component AppWindow inherits Window {
             }
         }
     }
-
-    title: "P-layer";
     icon: @image-url("../assets/icon/icon.png");
     preferred-width: 656px;
     preferred-height: 670px;
@@ -152,21 +224,34 @@ export component AppWindow inherits Window {
          height: 25px;
         
         clicked => {
+        click_audio1();
         close-window();
         }
     }
 
     HorizontalLayout {
         side-bar := SideBar {
+
             title: @tr("P-layer");
             model: [@tr("Menu" => "主页"), @tr("Menu" => "音乐库"), @tr("Menu" => "我的"), @tr("Menu" => "设置")];
+            click-audio=>{root.click-audio()}
         }
 
         if(side-bar.current-item == 0) : homepage {
             width: 500px;
+            open-url=>{root.open_the_url(url)}
+        
         }
         if(side-bar.current-item == 1) : MusicLib {width: 500px;}
-        if(side-bar.current-item == 2) : user-main {width: 500px;}
+        if(side-bar.current-item == 2) : user-main {
+            width: 500px;
+            user-name:root.user_name;
+            user-intro:root.user_intro;
+            user-gender:root.user_gender;
+            user-age:root.user_age;
+            user-music-number:root.user_music_number;
+            
+        }
         if(side-bar.current-item == 3) : setting {width: 500px;}
         // if(side-bar.current-item == 4) : AboutPage {}
     }
@@ -202,7 +287,6 @@ export component AppWindow inherits Window {
         //         }
         //     }
         // }
-        
         player{
             x:20px;
             y:parent.height -130px;
@@ -210,21 +294,7 @@ export component AppWindow inherits Window {
             preferred-height: 110px;
             
         }
-        Image {
-            PlayerArea := TouchArea { clicked => {root.music_play()}}
-            source: @image-url("../assets/icon/play.svg");
-            width: 30px;
-            x:parent.width/2;
-            y:parent.height -100px;
-            
-            //colorize: ListArea.has-hover ? #cf2727 : #ffffff;
-            colorize: #ffffff;
-            animate colorize {
-                duration: 250ms;
-            }
-    
-    
-        }
+
 
     // Rectangle {
     //     background: @linear-gradient(125deg,#130c27 90%, #0f0c16 100%, #1c123a 100%,#1f1441 100%, #180446 100%);
