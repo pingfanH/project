@@ -6,7 +6,7 @@ use rodio::{Decoder, OutputStream, Sink};
 use std::thread;
 use slint::LogicalPosition;
 use slint::SharedString;
-
+use std::collections::HashMap;
 //use tray_item::{IconSource, TrayItem};
 //use crate::slint::SideBarItem::Component;
 mod RequestLib;
@@ -16,26 +16,26 @@ use serde_json::json;
 slint::include_modules!();
 #[derive(Debug)]
 struct User {
+    user_token:String,
     user_id: String,
     user_account: String,
     user_password: String,
     user_name: String,
-    user_age: String,
-    user_info: String,
-    user_sign_date: String,
     user_gender: String,
+    user_age: String,
+    user_intro: String,
+    user_sign_date: String,
     user_music_number: i32,
 }
 #[tokio::main]
 
 async fn main() {
         let mut cookie="".to_string();
-        match FileLib::readfile("C:/Program Files/P-layer/cookie/cookie.txt").await {
+        match FileLib::readfile("C:/Program Files/P-layer/cookies/.token").await {
             Ok(content) => cookie=content,
             Err(e) => println!("{}", e),
         };
         println!("{}",cookie);
-
         //let mut user_data=json!({"name": "pingfanh"});
         let mut user_data: String = String::new();
         let mut url=format!("http://127.0.0.1:8000/api/query_user/{}",cookie);
@@ -52,25 +52,39 @@ async fn main() {
 let user_array: Vec<User> = json_array
     .into_iter()
     .map(|user_data| User {
-        user_id: user_data[0].clone().as_str().unwrap().to_string(),
-        user_account: user_data[1].clone().as_str().unwrap().to_string(),
-        user_password: user_data[2].clone().as_str().unwrap().to_string(),
-        user_name: user_data[3].clone().as_str().unwrap().to_string(),
-        user_age: user_data[4].clone().as_str().unwrap().to_string(),
-        user_info: user_data[5].clone().as_str().unwrap().to_string(),
-        user_sign_date: user_data[6].clone().as_str().unwrap().to_string(),
-        user_gender: user_data[7].clone().as_str().unwrap().to_string(),
-        user_music_number: user_data[8].clone().as_i64().unwrap() as i32,
+        user_token: user_data[0].clone().as_str().unwrap().to_string(),
+        user_id: user_data[1].clone().as_str().unwrap().to_string(),
+        user_account: user_data[2].clone().as_str().unwrap().to_string(),
+        user_password: user_data[3].clone().as_str().unwrap().to_string(),
+        user_name: user_data[4].clone().as_str().unwrap().to_string(),
+        user_gender: user_data[5].clone().as_str().unwrap().to_string(),
+        user_age: user_data[6].clone().as_str().unwrap().to_string(),
+        user_intro: user_data[7].clone().as_str().unwrap().to_string(),
+        user_sign_date: user_data[8].clone().as_str().unwrap().to_string(),
+        user_music_number: user_data[9].clone().as_i64().unwrap() as i32,
     })
     .collect();
 
+
+
     let ui= AppWindow::new().unwrap();
     for user in user_array {
+
+        FileLib::creat_cookie("id", user.user_id.as_bytes()).await;
+        FileLib::creat_cookie("name", user.user_name.as_bytes()).await;
+        FileLib::creat_cookie("age", user.user_age.as_bytes()).await;
+        FileLib::creat_cookie("intro", user.user_intro.as_bytes()).await;
+        FileLib::creat_cookie("gender", user.user_gender.as_bytes()).await;
+        FileLib::creat_cookie("sign_date", user.user_sign_date.to_string().as_bytes()).await;
+
+        ui.set_user_id(SharedString::from(user.user_id));
         ui.set_user_name(SharedString::from(user.user_name));
         ui.set_user_age(SharedString::from(user.user_age));
-        ui.set_user_intro(SharedString::from(user.user_info));
+        ui.set_user_intro(SharedString::from(user.user_intro));
         ui.set_user_gender(SharedString::from(user.user_gender));
         ui.set_user_music_number(user.user_music_number);
+        ui.set_user_sign_date(SharedString::from(user.user_sign_date));
+
     }
     
 
@@ -92,6 +106,7 @@ let user_array: Vec<User> = json_array
     
     //关闭窗口
     ui.on_close_window(move ||{
+        musicplay("C:/Program Files/P-layer/data/audios/notes.mp3");
         hanel_close.upgrade().unwrap().hide().unwrap();
     });
     //跳转到url
@@ -109,6 +124,22 @@ let user_array: Vec<User> = json_array
     ui.on_click_audio1(move ||{
         thread::spawn(|| {
             musicplay("C:/Program Files/P-layer/data/audios/notes.mp3");
+        });
+    });
+    ui.on_apply( move |updated_user_data|{
+
+        let mut user_data = HashMap::new();
+        user_data.insert("user_account", cookie.as_str());
+        user_data.insert("user_name", updated_user_data.name.as_str());
+        user_data.insert("user_age", updated_user_data.age.as_str());
+        user_data.insert("user_intro", &updated_user_data.intro.as_str());
+        user_data.insert("user_gender", &updated_user_data.gender.as_str());
+
+        let user_data = vec![json!(user_data)];
+        let body = serde_json::to_string(&user_data).unwrap();
+        println!("{:#?}", body);
+        tokio::spawn(async move {
+            RequestLib::post("http://127.0.0.1:8000/api/user/update", body.as_str()).await;
         });
     });
     //播放音乐

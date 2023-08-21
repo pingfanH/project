@@ -1,10 +1,17 @@
 
 import { setting } from "setting.slint";
-import { list,BuildingPane } from "list.slint";
+import { list,MusicList } from "list.slint";
 import { user-main } from "user.slint";
 import { homepage } from "homepage.slint";
 import { MusicLib } from "MusicLib.slint";
 import { SideBar } from "SideBar.slint";
+import { SettingValue,UserSetting } from "user.slint";
+export struct UserSettingData {
+    name:string,
+    gender:string,
+    intro:string,
+    age:string
+}
 //import { BorderlessWindow } from "borderless-window.slint";
 import {
     ComboBox, VerticalBox, HorizontalBox, GridBox, Button,
@@ -44,7 +51,15 @@ export component player{
         background: #4d4d4d81;
     }
     Image {
-        ListArea := TouchArea {clicked => {values.click_audio1();}}
+        ListArea := TouchArea {clicked => {values.click_audio1();
+            if (values.show-list){
+                values.show-list=false;
+            }
+            else{
+                values.show-list=true;
+            }
+            
+        }}
         source: @image-url("../assets/icon/music_list.svg");
 
         width: 40px;
@@ -151,7 +166,7 @@ export global values {
     callback music_pause();
     callback close-window();
     callback move-window(length, length);
-
+    in-out property <bool> show-list;
 }
 
 export component AppWindow inherits Window {
@@ -176,10 +191,15 @@ export component AppWindow inherits Window {
     in property <string> user_intro:"开发人员";
     in property <string> user_gender:"男";
     in property <string> user_age:"15";
+    in-out property <string> user-sign-date;
+    in-out property <string> user-id;
     in property <int> user_music_number:114;
-
+    in-out property <bool> is-setting<=>SettingValue.is-setting;
+    in-out property <bool> show-list<=>values.show-list;
+    callback apply(UserSettingData);
     
     title:"P-layer";
+    //移动窗口
     Rectangle {
         x:0;
         y:0;
@@ -203,6 +223,7 @@ export component AppWindow inherits Window {
     preferred-height: 670px;
     callback showsetting();
     default-font-family: "方正少儿简体";
+    
     Text {
         color: #3b3b3b;
         text: "CopyRightⒸPingfanH";
@@ -224,11 +245,9 @@ export component AppWindow inherits Window {
          height: 25px;
         
         clicked => {
-        click_audio1();
         close-window();
         }
     }
-
     HorizontalLayout {
         side-bar := SideBar {
 
@@ -245,17 +264,51 @@ export component AppWindow inherits Window {
         if(side-bar.current-item == 1) : MusicLib {width: 500px;}
         if(side-bar.current-item == 2) : user-main {
             width: 500px;
+            user-id:root.user-id;
             user-name:root.user_name;
             user-intro:root.user_intro;
             user-gender:root.user_gender;
             user-age:root.user_age;
             user-music-number:root.user_music_number;
-            
+            user-sign-date: root.user-sign-date;
+            click_audio=>{root.click_audio();}
+            click_audio1=>{root.click_audio1();}
+            apply=>{root.apply({
+                name:self.setting-user-name,
+                gender:self.setting-user-gender,
+                age:self.setting-user-age,
+                intro:self.setting-user-intro
+            });}
         }
         if(side-bar.current-item == 3) : setting {width: 500px;}
         // if(side-bar.current-item == 4) : AboutPage {}
     }
+    player{
+        x:20px;
+        y:parent.height -130px;
+        preferred-width: parent.width -37px;
+        preferred-height: 110px;
+    }
+    animated := Rectangle {
+        width: 100%; height: 100%;
+        y: parent.height;
+        states [
+            visible when (root.show-list) : {
+                y: 0;
+            in  {
+                animate y { duration: 200ms; easing: ease; }
+            }
+            out  {
+                animate y { duration: 200ms; easing: ease; }
+            }
+            }
+        ]
 
+        if (animated.y < root.height): MusicList {
+            //back => { root.show-list = false;click_audio1()}
+            background: #000000;
+        }
+    }
     
     // TabWidget {
         //     // hide the widgets from the tab focus handler when covered:
@@ -287,13 +340,7 @@ export component AppWindow inherits Window {
         //         }
         //     }
         // }
-        player{
-            x:20px;
-            y:parent.height -130px;
-            preferred-width: parent.width -37px;
-            preferred-height: 110px;
-            
-        }
+
 
 
     // Rectangle {

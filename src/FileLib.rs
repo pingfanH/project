@@ -2,8 +2,15 @@ use std::fs::File;
 use std::io::Write;
 use std::io::prelude::*;
 use std::fs;
-pub async fn writefile(path:&str,data:&[u8]) -> std::io::Result<()> {
+use std::sync::Arc;
+pub async fn writefile(path: &str, data: &[u8]) -> std::io::Result<()> {
     let mut file = File::create(path)?;
+    match readfile(path).await{
+        Ok(_) => {},
+        Err(_) => {
+            {let _ = fs::remove_file(path);}}
+    }
+
     file.write_all(data)?;
     Ok(())
 }
@@ -29,4 +36,10 @@ pub async fn readfile(path: &str) -> Result<String, String> {
             Err(String::from("Error"))
         }
     }
+}
+pub async fn creat_cookie(name:&str,data:&[u8]){
+    let path=format!("C:/Program Files/P-layer/cookies/.{}",name);
+    writefile(path.as_str(), data.as_ref()).await;
+
+
 }

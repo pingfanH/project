@@ -3,7 +3,8 @@
         {
             "type": "cargo",
             "name": "run-release",
-            "cargoArgs": ["run --release"],
+            "cargoArgs": ["run"],
+            "cargoExtraArgs": ["--release"],
         },
         {
             "type": "cargo",

@@ -2,7 +2,18 @@ import {
     ComboBox, VerticalBox, HorizontalBox, GridBox, Button,
     LineEdit, ListView, GroupBox, CheckBox, TabWidget
 } from "std-widgets.slint";
-
+export component Pane inherits Rectangle {
+    // capture all clicks
+    TouchArea {}
+}
+export component UserSetting inherits Pane{
+    in-out property <bool> is-setting;
+    callback back();
+    callback apply();
+    VerticalBox {
+        Text{text: "setting";}
+    }
+}
 export component setting{ 
 
 

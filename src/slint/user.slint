@@ -1,35 +1,254 @@
 import {
     ComboBox, VerticalBox, HorizontalBox, GridBox, Button,
-    LineEdit, ListView, GroupBox, CheckBox, TabWidget
+    LineEdit, ListView, GroupBox, CheckBox, TabWidget,Slider,TextEdit,StandardListView
 } from "std-widgets.slint";
-export component edit { 
-    Button {
-        x:0;
-        y:0;
-        width: parent.width;
-        height: parent.height;
-    }
-    Text {
-        text: "编辑";
-        x:parent.width/3;
-        y:parent.height/4;
-    }
+//import { UserSetting } from "setting.slint";
+
+export component Pane inherits Rectangle {
+    // capture all clicks
+    TouchArea {}
 }
-export component user-main{ 
+export struct UserSettingData {
+    name:string,
+    gender:string,
+    intro:string,
+    age:string
+}
+
+export component UserSetting inherits Pane{
+    in-out property <bool> is-setting<=>SettingValue.is-setting;
+    callback back<=> back_btn.clicked;
+    //callback apply<=>SettingValue.apply;
+    in-out property <string>setting-user-age;//:SettingValue.user-age;
+    //in-out property <int>setting-user-age-pos:50 ;
+    //in-out property <length>setting-user-age-text-pos<=>setting-user-age;
+    in-out property <string> setting-user-name;//:SettingValue.user-name;
+    //in-out property <string> changed-user-name<=>Uservalues.user-name;
+    in-out property <string> setting-user-gender;//:SettingValue.user-gender;
+    in-out property <string> setting-user-intro;//:SettingValue.user-intro;
+    property <bool>is-selecting-gender:false;
+
+    
+            Text {
+                x:30px;
+                y:40px;
+                font-size: 20px;
+                text: "名称:";
+            }
+            LineEdit {
+                x:90px;
+                y:40px;
+                font-size: 20px;
+                width: parent.width/2;
+                height: 30px;
+                placeholder-text: "昵称";
+                text: root.setting-user-name;
+                edited=>{root.setting-user-name=self.text}
+            }
+            Text {
+                x:31px;
+                y:100px;
+                font-size: 20px;
+                text: "年龄:";}
+                LineEdit {
+                    x:90px;
+                    y:100px;
+                    font-size: 20px;
+                    width: parent.width/2;
+                    height: 30px;
+                    placeholder-text: "昵称";
+                    text: root.setting-user-age;
+                    edited=>{root.setting-user-age=self.text}
+                }
+            // Slider {
+            //     x:90px;
+            //     y:100px;
+            //     width: 100px;
+            //     height: 30px;
+            //     value: root.setting-user-age;
+            //     changed => {setting-user-age=self.value;setting-user-age-pos=self.value;}
+            // }
+            
+            // Text {
+
+            //     x:root.setting-user-age-pos*1.2phx+95px;
+            //     y:80px;
+            //     font-size: 20px;text:root.setting-user-age;}
+
+            Text {
+                x:31px;
+                y:160px;
+                font-size: 20px;text: "性别:";}
+            Button {
+                text:root.setting-user-gender;
+                x:90px;
+                y:160px;
+                width: 90px;
+                height: 30px;
+                clicked => {root.is-selecting-gender=true}
+            }
+            Rectangle{
+                visible: root.is-selecting-gender;
+                width: 150px;
+                height: 150px;
+                background: #282828;
+                ListView {
+
+                    for ganders in[
+                        { text: "男"}, { text: "女"}, { text: "沃尔玛塑料袋" },
+                        { text: "武装直升机" }, { text: "青蛙"}, { text: "面包"},
+                        { text: "麦克风" },{text:"米奇蛋"}
+                    ]:Rectangle {
+                        height: 35px;
+                        width: parent.width;
+                        Text  {
+                            width: parent.width;
+                            x: 0;
+                            text: ganders.text;
+                            TouchArea {clicked => 
+                                {
+                                    root.setting-user-gender=ganders.text;
+                                    root.is-selecting-gender=false
+                                }} 
+                        }
+                    }
+                }
+
+                
+                // StandardListView {
+
+                //     visible: root.is-selecting-gender;
+                //     width:parent.width;
+                //     height: parent.height;
+                //     model: [ { text: "Blue"}, { text: "Red" }, { text: "Green" },
+                //         { text: "Yellow" }, { text: "Black"}, { text: "White"},
+                //         { text: "Magenta" }, { text: "Cyan" },
+                //     ];
+                    
+                // }
+            }
+            Text {
+                x:32px;
+                y:220px;
+                font-size: 20px;
+                text: "简介:";
+            }
+            LineEdit {
+                visible:!root.is-selecting-gender;
+                x:90px;
+                y:220px;
+                font-size: 20px;
+                width: parent.width/2;
+                
+                height: 30px;
+                placeholder-text: "输入简介";
+                edited=>{root.setting-user-intro=self.text}
+                text:root.setting-user-intro;
+            }
+            Button {
+                x:90px;
+                y:270px;
+                width: 90px;
+                height: 50px;
+                text: "确定";
+                clicked => {SettingValue.is-setting=false;
+                    //changed-user-name=root.setting-user-name;
+                    Uservalues.user-age=root.setting-user-age;
+                    Uservalues.user-gender=root.setting-user-gender;
+                    Uservalues.user-intro=root.setting-user-intro;
+                    // root.apply({
+                    //     name:root.setting-user-name,
+                    //     age:root.setting-user-age,
+                    //     gender:root.setting-user-gender,
+                    //     intro:root.setting-user-intro,
+                    // });
+                }
+            }
+            Button {
+                x:290px;
+                y:270px;
+                width: 90px;
+                height: 50px;
+                text: "关闭";
+                clicked => {SettingValue.is-setting=false}
+            }
+
+
+
+        
+        back_btn := 
+        Button {
+            //enabled: root.is-setting;
+            text: "返回";
+            x:parent.width;
+            height: self.min_height;
+        }
+        //Text{text: "setting";}
+    }
+export global SettingValue {
+    in-out property <bool> is-setting;
+
+    //callback apply(UserSettingData);
+}
+export global Uservalues {
     in-out property <string> user-name:"用户114514";
     in-out property <string> user-avatar:"C:/Program Files/P-layer/data/user-avatar/avatar.png";
     in-out property <string> user-intro:"简介";
     in-out property <string> user-gender:"无";
-    in-out property <string> user-age:"xx";
+    in-out property <string> user-age:"15";
+}
+export component user-main{
+    in-out property <string> user-id;//<=>SettingValue.user-age;
+    in-out property <string> user-name:"1";//<=>Uservalues.user-name;
+    in-out property <string> user-avatar;//<=>SettingValue.user-avatar;
+    in-out property <string> user-intro;//<=>SettingValue.user-intro;
+    in-out property <string> user-gender;//<=>SettingValue.user-gender;
+    in-out property <string> user-age;//<=>SettingValue.user-age;
+    in-out property <string> user-sign-date;//<=>SettingValue.user-age;
+
+    
+
+    //in-out property <string> user-age1<=>Uservalues.user-age;
+
     in-out property <int> user-music-number:0;
+    in-out property <bool> is-setting<=>SettingValue.is-setting;
+    callback click_audio();
+    callback click_audio1();
+
+    callback back;
+    //callback apply<=>SettingValue.apply;
+    //in-out property <string> setting-user-id;//<=>SettingValue.user-age;
+    in-out property <string>setting-user-age:user-age;//:SettingValue.user-age;
+    //in-out property <int>setting-user-age-pos:50 ;
+    //in-out property <length>setting-user-age-text-pos<=>setting-user-age;
+    in-out property <string> setting-user-name:user-name;//:SettingValue.user-name;
+    //in-out property <string> changed-user-name<=>Uservalues.user-name;
+    in-out property <string> setting-user-gender:user-gender;//:SettingValue.user-gender;
+    in-out property <string> setting-user-intro:user-intro;//:SettingValue.user-intro;
+    //in-out property <string> setting-user-sign-date;//<=>SettingValue.user-age;
+    property <bool>is-selecting-gender:false;
+    callback apply(UserSettingData);
+
     y:0;
-    edit{        
+    Button {
+        text: "编辑";
+        visible: !root.is-setting;   
         x:parent.width/2.49 +140px;
         y: 90px;
         width: 70px;
         height: 30px;
+        clicked => {SettingValue.is-setting=true;click_audio()}
+    }
+    Text {
+        text: "uid:"+user-id;
+        visible: !root.is-setting;
+        font-size: 14px;
+        idArea := TouchArea {}
+        x: idArea.has-hover  ? parent.width/2.3:parent.width/2.5;
+        y:180px;
     }
     Image{
+        visible: !root.is-setting;
         source: @image-url("C:/Program Files/P-layer/data/user-avatar/avatar.png");
         ListArea := TouchArea {}
         width: ListArea.has-hover  ? 110px:100px;
@@ -38,6 +257,7 @@ export component user-main{
         animate width,x,y {duration: 100ms;}    
     }
     Text{
+        visible: !root.is-setting;   
         text:user-name;
         horizontal-alignment: center;
         TextArea := TouchArea {}
@@ -47,6 +267,7 @@ export component user-main{
         animate font-size,x,y {duration: 100ms;}
     }
     Text{
+        visible: !root.is-setting;   
         text:"年龄:"+user-age;
         horizontal-alignment: center;
         Text1Area := TouchArea {}
@@ -57,6 +278,7 @@ export component user-main{
     
     }     
     Text{
+        visible: !root.is-setting;   
         text:"性别:"+user-gender;
         font-size: 20px;
         horizontal-alignment: center;
@@ -66,6 +288,7 @@ export component user-main{
         animate font-size,x,y {duration: 100ms;}
         }
     Text{
+        visible: !root.is-setting;   
         text:"个人简介:"+user-intro;
         font-size: 20px;
         horizontal-alignment: center;
@@ -76,6 +299,7 @@ export component user-main{
         
     }
     Text{
+        visible: !root.is-setting;   
         text:"收藏音乐数:"+user-music-number;
         font-size: 20px;
         horizontal-alignment: center;
@@ -84,6 +308,204 @@ export component user-main{
         y:320px;
         animate font-size,x,y {duration: 100ms;}
     }
+    Text{
+        visible: !root.is-setting;   
+        text:"注册于"+user-sign-date;
+        font-size: 20px;
+        horizontal-alignment: center;
+        Text5Area := TouchArea {}
+        x: Text5Area.has-hover  ? parent.width/2.3:parent.width/2.5;
+        y:350px;
+        animate font-size,x,y {duration: 100ms;}
+    }
+    animated := Rectangle {
+        width: 100%; height: 100%;
+        y: parent.height;
+        states [
+            visible when (root.is-setting) : {
+                y: 0;
+            in  {
+                animate y { duration: 200ms; easing: ease; }
+            }
+            out  {
+                animate y { duration: 200ms; easing: ease; }
+            }
+            }
+        ]
+
+        if (animated.y < root.height): 
+        Pane{
+
+                    Text {
+                        x:30px;
+                        y:40px;
+                        font-size: 20px;
+                        text: "名称:";
+                    }
+                    LineEdit {
+                        x:90px;
+                        y:40px;
+                        font-size: 20px;
+                        width: parent.width/2;
+                        height: 30px;
+                        placeholder-text: "昵称";
+                        text: root.setting-user-name;
+                        edited=>{root.setting-user-name=self.text}
+                    }
+                    Text {
+                        x:31px;
+                        y:100px;
+                        font-size: 20px;
+                        text: "年龄:";}
+                        LineEdit {
+                            x:90px;
+                            y:100px;
+                            font-size: 20px;
+                            width: parent.width/2;
+                            height: 30px;
+                            placeholder-text: "年龄";
+                            text: root.setting-user-age;
+                            edited=>{root.setting-user-age=self.text}
+                        }
+                    // Slider {
+                    //     x:90px;
+                    //     y:100px;
+                    //     width: 100px;
+                    //     height: 30px;
+                    //     value: root.setting-user-age;
+                    //     changed => {setting-user-age=self.value;setting-user-age-pos=self.value;}
+                    // }
+                    
+                    // Text {
+        
+                    //     x:root.setting-user-age-pos*1.2phx+95px;
+                    //     y:80px;
+                    //     font-size: 20px;text:root.setting-user-age;}
+        
+                    Text {
+                        x:31px;
+                        y:160px;
+                        font-size: 20px;text: "性别:";}
+                    Button {
+                        text:root.setting-user-gender;
+                        x:90px;
+                        y:160px;
+                        width: 90px;
+                        height: 30px;
+                        clicked => {root.is-selecting-gender=true}
+                    }
+                    Rectangle{
+                        visible: root.is-selecting-gender;
+                        width: 150px;
+                        height: 150px;
+                        background: #282828;
+                        ListView {
+        
+                            for ganders in[
+                                { text: "男"}, { text: "女"}, { text: "沃尔玛塑料袋" },
+                                { text: "武装直升机" }, { text: "青蛙"}, { text: "面包"},
+                                { text: "麦克风" },{text:"米奇蛋"}
+                            ]:Rectangle {
+                                height: 35px;
+                                width: parent.width;
+                                Text  {
+                                    width: parent.width;
+                                    x: 0;
+                                    text: ganders.text;
+                                    TouchArea {clicked => 
+                                        {
+                                            root.setting-user-gender=ganders.text;
+                                            root.is-selecting-gender=false
+                                        }} 
+                                }
+                            }
+                        }
+        
+                        
+                        // StandardListView {
+        
+                        //     visible: root.is-selecting-gender;
+                        //     width:parent.width;
+                        //     height: parent.height;
+                        //     model: [ { text: "Blue"}, { text: "Red" }, { text: "Green" },
+                        //         { text: "Yellow" }, { text: "Black"}, { text: "White"},
+                        //         { text: "Magenta" }, { text: "Cyan" },
+                        //     ];
+                            
+                        // }
+                    }
+                    Text {
+                        x:32px;
+                        y:220px;
+                        font-size: 20px;
+                        text: "简介:";
+                    }
+                    LineEdit {
+                        visible:!root.is-selecting-gender;
+                        x:90px;
+                        y:220px;
+                        font-size: 20px;
+                        width: parent.width/2;
+                        
+                        height: 30px;
+                        placeholder-text: "输入简介";
+                        edited=>{root.setting-user-intro=self.text}
+                        text:root.setting-user-intro;
+                    }
+                    Button {
+                        x:90px;
+                        y:270px;
+                        width: 90px;
+                        height: 50px;
+                        text: "确定";
+                        clicked => {SettingValue.is-setting=false;
+                            root.user-name=root.setting-user-name;
+                            root.user-age=root.setting-user-age;
+                            root.user-gender=root.setting-user-gender;
+                            root.user-intro=root.setting-user-intro;
+                            root.apply({
+                                name:root.setting-user-name,
+                                age:root.setting-user-age,
+                                gender:root.setting-user-gender,
+                                intro:root.setting-user-intro,
+                            });
+                        }
+                    }
+                    Button {
+                        x:290px;
+                        y:270px;
+                        width: 90px;
+                        height: 50px;
+                        text: "取消";
+                        clicked => {SettingValue.is-setting=false;
+                            root.setting-user-name=root.user-name;
+                            root.setting-user-age=root.user-age;
+                            root.setting-user-gender=root.user-gender;
+                            root.setting-user-intro=root.user-intro;
+                        }
+                    }
+        
+        
+        
+                
+                back_btn := 
+                Button {
+                    //enabled: root.is-setting;
+                    text: "返回";
+                    x:parent.width;
+                    height: self.min_height;
+                }
+                //Text{text: "setting";}
+            }
+        
+        // UserSetting {
+        //     back => { root.is-setting = false;click_audio1()}
+        //     background: #000000;
+        //     setting-user-name:root.user-name;
+        //     setting-user-age: root.user-age;
+        //     setting-user-gender: root.user-gender;
+        //     setting-user-intro: root.user-intro;
+        // }
+    }
 
 }
-

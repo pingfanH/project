@@ -30,11 +30,40 @@ component Pane inherits Rectangle {
     // capture all clicks
     TouchArea {}
 }
- export component BuildingPane inherits Pane {
+export global ListValue {
 
+}
+ export component MusicList inherits Pane {
+    //callback back <=> back_btn.clicked;
+    width: 200px;
+    height: 300px;
     VerticalBox {
         ListView{
-
+            for data in [
+                { text: "Blue",color: #ffffff},
+                { text: "Red",color: #ffffff},
+                { text: "Green",color: #ffffff},
+                { text: "Yellow",color: #ffffff},
+                { text: "Black",color: #ffffff},
+                { text: "White",color: #ffffff},
+                { text: "Magenta",color: #ffffff},
+                { text: "Cyan",color: #ffffff},
+            ] : Rectangle {
+                height: 30px;
+                width: parent.width;
+                Text {
+                    x: 0;
+                    text: data.text;
+                    color: data.color;
+                } 
         }
     }
+    // back_btn := 
+    // Button {
+    //     //enabled: root.is-setting;
+    //     text: "关闭";
+    //     x:parent.width;
+    //     height: self.min_height;
+    // }
+}
 }
