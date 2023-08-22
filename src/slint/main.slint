@@ -6,6 +6,7 @@ import { homepage } from "homepage.slint";
 import { MusicLib } from "MusicLib.slint";
 import { SideBar } from "SideBar.slint";
 import { SettingValue,UserSetting } from "user.slint";
+import { Login,SignData } from "Login.slint";
 export struct UserSettingData {
     name:string,
     gender:string,
@@ -187,16 +188,23 @@ export component AppWindow inherits Window {
     callback music_pause<=> values.music_pause;
     callback close-window();
     callback move-window(length, length);
-    in property <string> user_name:"pingfanh";
-    in property <string> user_intro:"开发人员";
-    in property <string> user_gender:"男";
-    in property <string> user_age:"15";
+    callback apply(UserSettingData);
+    callback login(string,string);
+    callback sign(SignData);
+    in property <string> user_name:"用户114514";
+    in property <string> user_intro:"未登录";
+    in property <string> user_gender:"未登录";
+    in property <string> user_age:"未登录";
     in-out property <string> user-sign-date;
     in-out property <string> user-id;
-    in property <int> user_music_number:114;
+    in property <int> user_music_number:0;
     in-out property <bool> is-setting<=>SettingValue.is-setting;
+    in-out property <bool> is-login:false;
     in-out property <bool> show-list<=>values.show-list;
-    callback apply(UserSettingData);
+
+
+    in-out property <string> account;
+    in-out property <string> password;
     
     title:"P-layer";
     //移动窗口
@@ -249,8 +257,9 @@ export component AppWindow inherits Window {
         }
     }
     HorizontalLayout {
+        visible: root.is-login;
         side-bar := SideBar {
-
+            
             title: @tr("P-layer");
             model: [@tr("Menu" => "主页"), @tr("Menu" => "音乐库"), @tr("Menu" => "我的"), @tr("Menu" => "设置")];
             click-audio=>{root.click-audio()}
@@ -284,32 +293,88 @@ export component AppWindow inherits Window {
         // if(side-bar.current-item == 4) : AboutPage {}
     }
     player{
+        visible: root.is-login;
         x:20px;
         y:parent.height -130px;
         preferred-width: parent.width -37px;
         preferred-height: 110px;
     }
     animated := Rectangle {
-        width: 100%; height: 100%;
-        y: parent.height;
+        //background: #0000002c;
+        property <length> width-:400px;
+        property <length> height-:10px;
+        width: 100%;
+        height: 100%;
+        y: 200px;
+        x:parent.x -120px;
+        opacity: 0;
         states [
-            visible when (root.show-list) : {
-                y: 0;
+            visible when (root.show-list&&root.is-login) : {
+                y: -60px;
+                height-:450px;
+                opacity: 1;
             in  {
-                animate y { duration: 200ms; easing: ease; }
+                animate y,opacity,height- { duration: 250ms; easing: ease; }
             }
             out  {
-                animate y { duration: 200ms; easing: ease; }
+                animate y,opacity,height- { duration: 250ms; easing: ease; }
             }
             }
         ]
 
         if (animated.y < root.height): MusicList {
+            width: width-;
+            height: height-;
+            // visible: root.show-list&&root.is-login;
             //back => { root.show-list = false;click_audio1()}
             background: #000000;
         }
     }
-    
+    animated1 :=Rectangle{
+        width: 100%; height: 100%;
+       // y: parent.height;
+        x: parent.width;
+        y:0;
+        opacity: 0;
+        
+        states [
+            visible when (!root.is-login) : {
+                width:100%;
+                opacity:1;
+                y: 0;
+                x: 0;
+            in  {
+                animate width,x { duration: 400ms; easing: ease; }
+                animate opacity { duration: 100ms; easing: ease; }
+            }
+            out  {
+                animate width,x { duration: 400ms; easing: ease; }
+                animate opacity { duration: 200ms; easing: ease; }
+            }
+            }
+        ]
+
+        if (animated1.y < root.height): Login {
+            width-:parent.width;
+            height-:parent.height/2;
+            login=>{
+                root.is-login=true;
+                root.account=self.account;
+                root.password=self.password;
+                root.login(root.account,root.password);
+            }
+            signup=>{root.sign({
+                account:self.sign-account,
+                password:self.sign-password,
+                name:self.sign-name,
+                gender:self.sign-gender,
+                age:self.sign-age,
+                intro:self.sign-intro,
+            });}
+            //back => { root.show-list = false;click_audio1()}
+            background: #1C1C1C;
+        }
+    }
     // TabWidget {
         //     // hide the widgets from the tab focus handler when covered:
         //     visible: pane-visible;

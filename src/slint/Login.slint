@@ -1,0 +1,277 @@
+
+
+import { TextEdit , LineEdit, Button,VerticalBox, HorizontalBox} from "std-widgets.slint";
+
+export struct SignData {
+    account:string,
+    password:string,
+    name:string,
+    gender:string,
+    age:string,
+    intro:string
+}
+export component linetext {
+    callback click-();
+    in-out property <bool> visible-;
+    in-out property <length> x-;
+    in-out property <length> y-;
+    in-out property <string> text-;
+    in-out property <string> line-;
+    in-out property <color> color-defult;
+    in-out property <color> color-hover;
+
+    Text {
+        visible: visible-;
+        forgetarea := TouchArea {clicked => {root.click-();}}
+        text: root.text-;
+        color: forgetarea.has-hover? color-hover:color-defult;
+        animate color { duration:100ms; }
+    }
+    Text {
+        visible: visible-;
+        text: line-;
+        y:4px;
+        x: -3px;
+        color: forgetarea.has-hover? color-hover:color-defult;
+        animate color { duration:100ms; }
+    }
+ }
+export global Values {
+    in-out property <bool> douforget:false;
+    in-out property <bool> areunew:false;
+    in-out property <string> sign-account:"123";
+    in-out property <string> sign-password:"1213";
+    in-out property <string> sign-name:"12312";
+    in-out property <string> sign-gender:"11223";
+    in-out property <string> sign-age:"12312";
+    in-out property <string> sign-intro:"11223";
+
+ }
+export component Signup { 
+    callback signup();
+    in-out property <string> account;
+    
+    LineEdit {
+        visible: (Values.areunew);
+        placeholder-text: "账号";
+        width: parent.width*0.8;
+        height: 30px;
+        y:20px;
+        text: account;
+        edited => {
+            Values.sign-account=self.text;
+        }
+     }
+     LineEdit {
+        visible: (Values.areunew);
+        placeholder-text: "密码";
+        width: parent.width*0.8;
+        height: 30px;
+        y:60px;
+        edited => {Values.sign-password=self.text;}
+     }
+     LineEdit {
+        visible: (Values.areunew);
+        placeholder-text: "昵称";
+        width: parent.width*0.8;
+        height: 30px;
+        y:100px;
+        edited => {Values.sign-name=self.text;}
+     }
+     LineEdit {
+        visible: (Values.areunew);
+        placeholder-text: "性别";
+        width: parent.width*0.8;
+        height: 30px;
+        y:140px;
+        edited => {Values.sign-name=self.text;}
+     }
+     LineEdit {
+        visible: (Values.areunew);
+        placeholder-text: "年龄";
+        width: parent.width*0.8;
+        height: 30px;
+        y:180px;
+        edited => {Values.sign-age=self.text;}
+     }
+     LineEdit {
+        visible: (Values.areunew);
+        placeholder-text: "简介";
+        width: parent.width*0.8;
+        height: 30px;
+        y:220px;
+        edited => {Values.sign-intro=self.text;}
+     }
+     Button {
+        text: "注册";
+        width: 60px;
+        height: 40px;
+        x:parent.width*0.1;
+        y:260px;
+        clicked => {root.signup();}
+     }
+     Button {
+        text: "取消";
+        width: 60px;
+        height: 40px;
+        x:parent.width*0.72;
+        y:260px;
+        clicked => {
+            // root.account="";
+            // Values.sign-account="";
+            // Values.sign-password="";
+            // Values.sign-name="";
+            // Values.sign-gender="";
+            // Values.sign-age="";
+            // Values.sign-intro="";
+            Values.areunew=false;
+        }
+     }
+     
+
+    }
+export component Login { 
+    in-out property <string> account;
+    in-out property <string> password;
+
+    in-out property <string> sign-account<=>Values.sign-account;
+    in-out property <string> sign-password<=>Values.sign-password;
+    in-out property <string> sign-name<=>Values.sign-name;
+    in-out property <string> sign-age<=>Values.sign-age;
+    in-out property <string> sign-gender<=>Values.sign-gender;
+    in-out property <string> sign-intro<=>Values.sign-intro;
+    in-out property <bool> douforget<=>Values.douforget;
+    in-out property <bool> areunew<=>Values.areunew;
+    //in-out property <bool> is-login;
+    callback login();
+    callback signup(SignData);
+    in-out property <bool> login-error:false;
+    in-out property <length> width-;
+    in-out property <length> height-;
+    in-out property <color> background;
+    width: width-;
+    height: height-;
+   //background: background;
+    Rectangle{
+        background: background;
+        Text {
+            visible: !(douforget||areunew);
+            text: "登录";
+            y:40px;
+            font-size: 30px;
+        }
+        LineEdit {
+            visible: !(douforget||areunew);
+            placeholder-text: "账号";
+            width: parent.width*0.8;
+            height: 30px;
+            y:90px;
+            edited => {root.account=self.text}
+         }
+        LineEdit {
+            visible: !(douforget||areunew);
+            placeholder-text: "密码";
+            width: parent.width*0.8;
+            height: 30px;
+            y:140px;
+            edited => {root.password=self.text}
+         }
+        Button { 
+            visible: !(douforget||areunew);
+            width: parent.width/1.5;
+            y:190px;
+            text: "确定";
+            clicked => {login();}
+          }
+        linetext{
+            visible-: !(douforget||areunew);
+            text-: "忘记密码?";
+            line-: "_________";
+            x: parent.width*0.1;
+            y:230px;
+            color-defult: #b5b5b5;
+            color-hover: #e7e6e6;
+            click- => {root.douforget=true}
+        }
+        linetext{
+            visible-: !(douforget||areunew);
+            text-: "没有账号?";
+            line-: "_________";
+            x: parent.width*0.82;
+            y:230px;
+            color-defult: #b5b5b5;
+            color-hover: #e7e6e6;
+            click- => {root.areunew=true}
+        }
+        
+        error:=Rectangle{
+            width: 100%; height: 100%;
+            //x: parent.width;
+            y:100px;
+            opacity: 0;
+            
+            states [
+                visible when (root.login-error) : {
+                    width:100%;
+                    opacity:1;
+                    y: -140px;
+                    x: 0;
+                in  {
+                    animate width,x,y { duration: 1400ms; easing: ease; }
+                    animate opacity { duration: 1000ms; easing: ease; }
+                }
+                out  {
+                    animate width,x,y { duration: 800ms; easing: ease; }
+                    animate opacity { duration: 200ms; easing: ease; }
+                }
+                }
+            ]
+    
+            if (error.y < root.height): Rectangle {
+                Text{text: "账号或密码错误！";}
+                width:100px;
+                height:30px;
+                //back => { root.show-list = false;click_audio1()}
+                background: #f6f6f6;
+            }
+        }
+        signin:=Rectangle{
+            width: 100%; height: 100%;
+            x: parent.width;
+            //y:100px;
+            opacity: 0;
+            
+            states [
+                visible when (root.areunew) : {
+                    width:100%;
+                    opacity:1;
+                    //y: -140px;
+                    x: 0;
+                in  {
+                    animate width,x { duration: 200ms; easing: ease; }
+                    animate opacity { duration: 200ms; easing: ease; }
+                }
+                out  {
+                    animate width,x { duration: 200ms; easing: ease; }
+                    animate opacity { duration: 200ms; easing: ease; }
+                }
+                }
+            ]
+    
+            if (signin.y < root.height): Signup {
+                width:100%;
+                height:100%;
+                signup=>{root.signup({
+                    account:Values.sign-account,
+                    password:Values.sign-password,
+                    name:Values.sign-name,
+                    gender:Values.sign-gender,
+                    age:Values.sign-age,
+                    intro:Values.sign-intro,
+                });}
+            } 
+        }
+
+    }
+
+}
