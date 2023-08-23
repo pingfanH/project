@@ -28,7 +28,7 @@ export component UserSetting inherits Pane{
     in-out property <string> setting-user-intro;//:SettingValue.user-intro;
     property <bool>is-selecting-gender:false;
 
-    
+
             Text {
                 x:30px;
                 y:40px;
@@ -246,6 +246,7 @@ export component user-main{
         idArea := TouchArea {}
         x: idArea.has-hover  ? parent.width/2.3:parent.width/2.5;
         y:180px;
+        animate font-size,x,y {duration: 100ms;}
     }
     Image{
         visible: !root.is-setting;
@@ -469,6 +470,7 @@ export component user-main{
                                 gender:root.setting-user-gender,
                                 intro:root.setting-user-intro,
                             });
+                            click_audio();
                         }
                     }
                     Button {
@@ -482,6 +484,7 @@ export component user-main{
                             root.setting-user-age=root.user-age;
                             root.setting-user-gender=root.user-gender;
                             root.setting-user-intro=root.user-intro;
+                            click_audio1();
                         }
                     }
         

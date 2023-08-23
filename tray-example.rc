@@ -1,2 +1,5 @@
-iconName ICON "resources/icon.ico"
+aa-exe-icon ICON "./src/assets/icon/icon.ico"
+name-of-icon-in-rc-file ICON "./src/assets/icon/icon.ico"
+another-name-from-rc-file ICON "./src/assets/icon/icon.ico"
+
 

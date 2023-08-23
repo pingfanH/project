@@ -8,8 +8,10 @@ use slint::LogicalPosition;
 use slint::SharedString;
 use std::collections::HashMap;
 use std::fs;
-//use tray_item::{IconSource, TrayItem};
-//use crate::slint::SideBarItem::Component;
+
+use std::sync::mpsc;
+use tray_item::{IconSource, TrayItem};
+
 mod RequestLib;
 mod json;
 mod FileLib;
@@ -30,17 +32,74 @@ struct User {
     user_sign_date: String,
     user_music_number: i32,
 }
+enum Message {
+    Quit,
+    LogOff,
+    Red,
+}
 #[tokio::main]
 
 async fn main() {
     let ui= AppWindow::new().unwrap();
-
-
-            
-        
+    let handle = ui.as_weak();
+    let hanel_close = ui.as_weak();
+    let hanel_close1 = ui.as_weak();
+    let set_values=ui.as_weak();
+    tokio::spawn(async move{
+        let mut tray = TrayItem::new(
+            "P-layer",
+            IconSource::Resource("name-of-icon-in-rc-file"),
+        )
+        .unwrap();
     
+        tray.add_label("P-layer").unwrap();
+    
+        tray.add_menu_item("设置", || {
+            println!("Hello!");
+        })
+        .unwrap();
+    
+        tray.inner_mut().add_separator().unwrap();
+    
+        let (tx, rx) = mpsc::sync_channel(1);
+    
+        let red_tx = tx.clone();
+        tray.add_menu_item("退出登录", move || {
+            red_tx.send(Message::LogOff).unwrap();
+        })
+        .unwrap();
 
+    
+        tray.inner_mut().add_separator().unwrap();
+    
+        let quit_tx = tx.clone();
+        tray.add_menu_item("退出", move || {
+            quit_tx.send(Message::Quit).unwrap();
+        })
+        .unwrap();
         
+            loop {
+                match rx.recv() {
+                    Ok(Message::Quit) => {
+                        println!("Quit");
+                    }
+                    Ok(Message::Red) => {
+                        println!("Red");
+                        tray.set_icon(IconSource::Resource("another-name-from-rc-file"))
+                            .unwrap();
+                        
+                    }
+                    Ok(Message::LogOff) => {
+                        println!("Green");
+                        tray.set_icon(IconSource::Resource("name-of-icon-in-rc-file"))
+                            .unwrap()
+                    }
+                    _ => {}
+                }
+            }
+        });
+
+    
 
         let mut istoken:bool=false;
 
@@ -152,8 +211,7 @@ async fn main() {
 
     
 
-    let handle = ui.as_weak();
-    let hanel_close = ui.as_weak();
+   
     
     //监听按键
     // thread::spawn(|| {
@@ -217,8 +275,10 @@ async fn main() {
             RequestLib::post("http://127.0.0.1:8000/api/user/update", body.as_str()).await;
         });
     });
-    ui.on_login( move |account,password|{
-        
+
+    ui.on_login(move|account,password|{
+
+
         tokio::spawn(async move {
             
             //ui.set_user_name(SharedString::from("123"));
@@ -227,12 +287,14 @@ async fn main() {
             //println!("{},{}",account,password);
             let mut user_data=format!("http://127.0.0.1:8000/api/get_token/{}/{}",account,password);
             match  RequestLib::get(user_data.as_str()).await{
-                Ok(ok)=>{user_data=ok},
+                Ok(ok)=>{
+                    user_data=ok;
+                },
                 Err(err)=>eprint!("{}",err)
             } 
             println!("{}",user_data);
             let mut user_data=json::str2json(user_data.as_str());
-
+            //let mut name = Arc::new(user_data["user_name"].to_string().clone());
             FileLib::creat_cookie("token", user_data["user_token"].to_string().as_bytes()).await;
             FileLib::creat_cookie("account", user_data["user_account"].to_string().as_bytes()).await;
             FileLib::creat_cookie("password", user_data["user_password"].to_string().as_bytes()).await;
@@ -243,13 +305,14 @@ async fn main() {
             FileLib::creat_cookie("gender", user_data["user_gender"].to_string().as_bytes()).await;
             FileLib::creat_cookie("sign_date", user_data["user_sign_date"].to_string().as_bytes()).await;
             FileLib::creat_cookie("music_number", user_data["user_music_number"].to_string().as_bytes()).await;
-            
-
         });
+
     });
     ui.on_sign(move|SignData|{
-        let body=format!("{},{},{},{},{},{}", SignData.account.as_str(),SignData.password.as_str(),SignData.name.as_str(),SignData.age.as_str(),SignData.age.as_str(),SignData.intro.as_str());
         
+
+        let body=format!("{},{},{},{},{},{}", SignData.account.as_str(),SignData.password.as_str(),SignData.name.as_str(),SignData.age.as_str(),SignData.age.as_str(),SignData.intro.as_str());
+        //let user_name=SignData.name;
         tokio::spawn(async move {
             RequestLib::post("http://127.0.0.1:8000/api/user/create",body.as_str()).await;
             FileLib::creat_cookie("account", SignData.account.as_bytes()).await;
@@ -257,8 +320,17 @@ async fn main() {
             FileLib::creat_cookie("name", SignData.name.as_bytes()).await;
             FileLib::creat_cookie("gender", SignData.gender.as_bytes()).await;
             FileLib::creat_cookie("age", SignData.age.as_bytes()).await;
-            FileLib::creat_cookie("intro", SignData.intro .as_bytes()).await;
+            FileLib::creat_cookie("intro", SignData.intro.as_bytes()).await;
+            let mut user_data=format!("http://127.0.0.1:8000/api/get_token/{}/{}",SignData.account,SignData.password);
+            match  RequestLib::get(user_data.as_str()).await{
+                Ok(ok)=>{
+                    user_data=ok;
+                },
+                Err(err)=>eprint!("{}",err)
+            
+            } 
         });
+       
     });
     //播放音乐
     ui.on_music_play(move ||{
