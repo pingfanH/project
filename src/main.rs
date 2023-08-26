@@ -2,6 +2,9 @@
 extern crate serde_json;
 use std::fs::File;
 use std::io::BufReader;
+use std::path;
+use std::path::Path;
+use std::process;
 use rodio::{Decoder, OutputStream, Sink};
 use std::thread;
 use slint::LogicalPosition;
@@ -9,15 +12,24 @@ use slint::SharedString;
 use std::collections::HashMap;
 use std::fs;
 
+use rfd::FileDialog;
+
 use std::sync::mpsc;
 use tray_item::{IconSource, TrayItem};
 
 mod RequestLib;
 mod json;
 mod FileLib;
+mod slinttrait;
+mod musicplayer;
+
 use serde_json::json;
 use std::sync::{Arc, RwLock};
 use std::cell::Cell;
+use std::sync::mpsc::{channel, Receiver, Sender};
+use tokio::task;
+
+use crate::slinttrait::CargoMessage;
 slint::include_modules!();
 #[derive(Debug)]
 struct User {
@@ -36,16 +48,14 @@ enum Message {
     Quit,
     LogOff,
     Red,
+    Run,
+    Test
 }
 #[tokio::main]
 
 async fn main() {
     let ui= AppWindow::new().unwrap();
-    let handle = ui.as_weak();
     let hanel_close = ui.as_weak();
-    let hanel_close1 = ui.as_weak();
-    let set_values=ui.as_weak();
-    tokio::spawn(async move{
         let mut tray = TrayItem::new(
             "P-layer",
             IconSource::Resource("name-of-icon-in-rc-file"),
@@ -53,27 +63,35 @@ async fn main() {
         .unwrap();
     
         tray.add_label("P-layer").unwrap();
-    
-        tray.add_menu_item("设置", || {
-            println!("Hello!");
-        })
-        .unwrap();
+        
     
         tray.inner_mut().add_separator().unwrap();
     
         let (tx, rx) = mpsc::sync_channel(1);
-    
+        let run_tx=tx.clone();
+        tray.add_menu_item("启动", move|| {
+            run_tx.send(Message::Run).unwrap();
+           
+        })
+        .unwrap();
+
         let red_tx = tx.clone();
         tray.add_menu_item("退出登录", move || {
             red_tx.send(Message::LogOff).unwrap();
         })
         .unwrap();
 
+        let red_tx = tx.clone();
+        tray.add_menu_item("test", move || {
+            red_tx.send(Message::Test).unwrap();
+        })
+        .unwrap();
     
         tray.inner_mut().add_separator().unwrap();
     
         let quit_tx = tx.clone();
         tray.add_menu_item("退出", move || {
+            
             quit_tx.send(Message::Quit).unwrap();
         })
         .unwrap();
@@ -82,6 +100,8 @@ async fn main() {
                 match rx.recv() {
                     Ok(Message::Quit) => {
                         println!("Quit");
+                        hanel_close.upgrade().unwrap().hide().unwrap();
+                        process::exit(0);
                     }
                     Ok(Message::Red) => {
                         println!("Red");
@@ -90,17 +110,35 @@ async fn main() {
                         
                     }
                     Ok(Message::LogOff) => {
-                        println!("Green");
-                        tray.set_icon(IconSource::Resource("name-of-icon-in-rc-file"))
-                            .unwrap()
+                        println!("Logoff");
+                        match delete_folder_contents("C:/Program Files/P-layer/cookies") {
+                            Ok(()) => println!("del"),
+                            Err(e) => println!("del err:{}", e),
+                        }
+                    }
+                    Ok(Message::Test) => {
+                        println!("Test");
+                        ui.set_user_name(SharedString::from("1234"));
+                    }
+                    Ok(Message::Run) => {
+                        Apprun(&ui).await;
                     }
                     _ => {}
                 }
             }
-        });
 
+
+
+}
+
+async fn Apprun(ui:&AppWindow){
+   // let ui= AppWindow::new().unwrap();
+    //let cargo_worker = slint::CargoWorker::new(&cargo_ui);
+    let handle = ui.as_weak();
+    let hanel_close = ui.as_weak();
     
-
+    let set_values=ui.as_weak();
+    let cargo_worker = slinttrait::CargoWorker::new(&ui);
         let mut istoken:bool=false;
 
         let mut cookie="".to_string();
@@ -112,19 +150,19 @@ async fn main() {
             Err(e) => println!("{}", e),
         };
         println!("{}",cookie);
-        let mut user_data: String = String::new();
-        let mut url=format!("http://127.0.0.1:8000/api/query_user/{}",cookie);
-        match RequestLib::get(url.as_str()).await {
-            Ok(body) => {
-                println!("{body}");
-                user_data = body;
-            },
-            Err(err) => eprintln!("Error: {}", err),
-        }
-        //let mut user_data=json!({"name": "pingfanh"});
-        // let mut json_array: Vec<Vec<serde_json::Value>>;
-        // let user_array: Vec<User>;
+        // let mut user_data: String = String::new();
+        // let mut url=format!("http://127.0.0.1:8000/api/query_user/{}",cookie);
+       
+        // match RequestLib::get(url.as_str()).await {
+        //     Ok(body) => {
+        //         println!("{body}");
+        //         user_data = body;
+        //     },
+        //     Err(err) => eprintln!("Error: {}", err),
+        // }
+
         if(istoken){
+
                     ui.set_is_login(true);
                     match FileLib::read_cookie("name").await{
                         Ok(ok)=>{ui.set_user_name(SharedString::from(ok))},
@@ -154,57 +192,6 @@ async fn main() {
                         Ok(ok)=>ui.set_user_music_number(ok.parse().unwrap()),
                         Err(err)=>eprintln!("{}",err)
                     }
-
-
-                    // ui.set_user_id(SharedString::from(user.user_id));
-                    
-                    // ui.set_user_age(SharedString::from(user.user_age));
-                    // ui.set_user_intro(SharedString::from(user.user_intro));
-                    // ui.set_user_gender(SharedString::from(user.user_gender));
-                    // ui.set_user_music_number(user.user_music_number);
-                    // ui.set_user_sign_date(SharedString::from(user.user_sign_date));
-                    // ui.set_is_login(true);
-
-            // json_array= serde_json::from_str(user_data.as_str()).unwrap();
-
-            // user_array= json_array
-            //     .into_iter()
-            //     .map(|user_data| User {
-            //         user_token: user_data[0].clone().as_str().unwrap().to_string(),
-            //         user_id: user_data[1].clone().as_str().unwrap().to_string(),
-            //         user_account: user_data[2].clone().as_str().unwrap().to_string(),
-            //         user_password: user_data[3].clone().as_str().unwrap().to_string(),
-            //         user_name: user_data[4].clone().as_str().unwrap().to_string(),
-            //         user_gender: user_data[5].clone().as_str().unwrap().to_string(),
-            //         user_age: user_data[6].clone().as_str().unwrap().to_string(),
-            //         user_intro: user_data[7].clone().as_str().unwrap().to_string(),
-            //         user_sign_date: user_data[8].clone().as_str().unwrap().to_string(),
-            //         user_music_number: user_data[9].clone().as_i64().unwrap() as i32,
-            //     })
-            //     .collect();
-
-
-
-
-            //     for user in user_array {
-
-            //         FileLib::creat_cookie("id", user.user_id.as_bytes()).await;
-            //         FileLib::creat_cookie("name", user.user_name.as_bytes()).await;
-            //         FileLib::creat_cookie("age", user.user_age.as_bytes()).await;
-            //         FileLib::creat_cookie("intro", user.user_intro.as_bytes()).await;
-            //         FileLib::creat_cookie("gender", user.user_gender.as_bytes()).await;
-            //         FileLib::creat_cookie("sign_date", user.user_sign_date.to_string().as_bytes()).await;
-
-            //         ui.set_user_id(SharedString::from(user.user_id));
-            //         ui.set_user_name(SharedString::from(user.user_name));
-            //         ui.set_user_age(SharedString::from(user.user_age));
-            //         ui.set_user_intro(SharedString::from(user.user_intro));
-            //         ui.set_user_gender(SharedString::from(user.user_gender));
-            //         ui.set_user_music_number(user.user_music_number);
-            //         ui.set_user_sign_date(SharedString::from(user.user_sign_date));
-            //         ui.set_is_login(true);
-
-            //     }
         };
 
 
@@ -249,10 +236,59 @@ async fn main() {
             musicplay("C:/Program Files/P-layer/data/audios/notes.mp3");
         });
     });
+    ui.on_test(move|value|{
+        let cargo_channel = cargo_worker.channel.clone();
+        cargo_channel.send(CargoMessage::SetValue("set_user_name".to_string(),value.to_string())).unwrap()
+    });
+    ui.on_musicupload(move|name|{
+        let files = FileDialog::new()
+        .add_filter("music", &["mp3","mp4","flac","wav","ogg","avi","mov","mkv"])
+        //.add_filter("rust", &["rs", "toml"])
+        .set_directory("/")
+        .pick_file();
+    print!("name{}",name.as_str());
+    if let Some(files ) = files{
+            let path=files.display().to_string();
+            // let path=path.as_str().replace("\\", "/");
+            println!("{}",path);
+           
+            tokio::spawn(async move{
+                match  FileLib::read_cookie("account").await{
+                    Ok(ok)=>{
+                        let name=name.as_str();
+                        let filename=path.split(r"\").last().unwrap();
+                        println!("{}",name);
+                        RequestLib::upload(path.as_str(),"http://127.0.0.1:8000/api/upload", ok.as_str(),filename).await;
+                    },
+                    Err(err)=>eprintln!("{}",err)
+                }
+            });
+    }
+    });
+    let cargo_worker = Arc::new(slinttrait::CargoWorker::new(&ui));
+    let cargo_channel = cargo_worker.channel.clone();
+    ui.on_choose_avatar(move||{
+        let cargo_channel = cargo_channel.clone();
+        let files = FileDialog::new()
+        .add_filter("music", &["png"])
+        .set_directory("/")
+        .pick_file();
+    if let Some(files ) = files{
+            let path=files.display().to_string();
+            // let path=path.as_str().replace("\\", "/");
+            println!("{}",path);
+            let cargo_channel = cargo_worker.channel.clone();
+            cargo_channel.send(CargoMessage::SetValue("set_avatar_path".to_string(),path)).unwrap();
+
+        };
+       
+
+
+    });
     ui.on_apply( move |updated_user_data|{
         
         let mut user_data = HashMap::new();
-        user_data.insert("user_cookie", cookie.as_str());
+        user_data.insert("user_token", cookie.as_str());
         user_data.insert("user_name", updated_user_data.name.as_str());
         user_data.insert("user_age", updated_user_data.age.as_str());
         user_data.insert("user_intro", &updated_user_data.intro.as_str());
@@ -260,14 +296,13 @@ async fn main() {
 
         let user_data = vec![json!(user_data)];
         let body = serde_json::to_string(&user_data).unwrap();
-        println!("{:#?}", body);
-        let name = updated_user_data.name;
+        println!("apply {:#?}", body);
+            let name = updated_user_data.name;
             let age = updated_user_data.age.clone();
             let intro = updated_user_data.intro.clone();
             let gender = updated_user_data.gender.clone();
         tokio::spawn(async move {
-            
-
+           
             FileLib::creat_cookie("name", name.as_bytes()).await;
             FileLib::creat_cookie("age", age.as_bytes()).await;
             FileLib::creat_cookie("intro", intro.as_bytes()).await;
@@ -275,12 +310,13 @@ async fn main() {
             RequestLib::post("http://127.0.0.1:8000/api/user/update", body.as_str()).await;
         });
     });
+    let cargo_worker = Arc::new(slinttrait::CargoWorker::new(&ui));
+    let cargo_channel = cargo_worker.channel.clone();
+    ui.on_login( move|account,password|{
 
-    ui.on_login(move|account,password|{
-
-
+       
+        let cargo_channel = cargo_channel.clone();
         tokio::spawn(async move {
-            
             //ui.set_user_name(SharedString::from("123"));
             let account:&str=account.as_str();
             let password:&str=password.as_str();
@@ -293,25 +329,45 @@ async fn main() {
                 Err(err)=>eprint!("{}",err)
             } 
             println!("{}",user_data);
-            let mut user_data=json::str2json(user_data.as_str());
-            //let mut name = Arc::new(user_data["user_name"].to_string().clone());
-            FileLib::creat_cookie("token", user_data["user_token"].to_string().as_bytes()).await;
-            FileLib::creat_cookie("account", user_data["user_account"].to_string().as_bytes()).await;
-            FileLib::creat_cookie("password", user_data["user_password"].to_string().as_bytes()).await;
-            FileLib::creat_cookie("id", user_data["user_id"].to_string().as_bytes()).await;
-            FileLib::creat_cookie("name", user_data["user_name"].to_string().as_bytes()).await;
-            FileLib::creat_cookie("age", user_data["user_age"].to_string().as_bytes()).await;
-            FileLib::creat_cookie("intro", user_data["user_intro"].to_string().as_bytes()).await;
-            FileLib::creat_cookie("gender", user_data["user_gender"].to_string().as_bytes()).await;
-            FileLib::creat_cookie("sign_date", user_data["user_sign_date"].to_string().as_bytes()).await;
-            FileLib::creat_cookie("music_number", user_data["user_music_number"].to_string().as_bytes()).await;
-        });
 
+            let mut user_data=json::str2json(user_data.as_str());
+            
+            cargo_channel.send(CargoMessage::SetValue("set_user_name".to_string(),user_data["user_name"].to_string().replace('"',""))).unwrap();
+            cargo_channel.send(CargoMessage::SetValue("set_user_age".to_string(),user_data["user_age"].to_string().replace('"',""))).unwrap();
+            cargo_channel.send(CargoMessage::SetValue("set_user_id".to_string(),user_data["user_id"].to_string().replace('"',""))).unwrap();
+            cargo_channel.send(CargoMessage::SetValue("set_user_gender".to_string(),user_data["user_gender"].to_string().replace('"',""))).unwrap();
+            cargo_channel.send(CargoMessage::SetValue("set_user_intro".to_string(),user_data["user_intro"].to_string().replace('"',""))).unwrap();
+            cargo_channel.send(CargoMessage::SetValue("set_user_music_number".to_string(),user_data["user_music_number"].to_string().replace('"',""))).unwrap();
+            cargo_channel.send(CargoMessage::SetValue("set_user_sign_date".to_string(),user_data["user_sign_date"].to_string().replace('"',""))).unwrap();
+            
+            //let mut name = Arc::new(user_data["user_name"].to_string().clone());
+            FileLib::creat_cookie("token", user_data["user_token"].to_string().replace('"',"").as_bytes()).await;
+            FileLib::creat_cookie("account", user_data["user_account"].to_string().replace('"',"").as_bytes()).await;
+            FileLib::creat_cookie("password", user_data["user_password"].to_string().replace('"',"").as_bytes()).await;
+            FileLib::creat_cookie("id", user_data["user_id"].to_string().replace('"',"").as_bytes()).await;
+            FileLib::creat_cookie("name", user_data["user_name"].to_string().replace('"',"").as_bytes()).await;
+            FileLib::creat_cookie("age", user_data["user_age"].to_string().replace('"',"").as_bytes()).await;
+            FileLib::creat_cookie("intro", user_data["user_intro"].to_string().replace('"',"").as_bytes()).await;
+            FileLib::creat_cookie("gender", user_data["user_gender"].to_string().replace('"',"").as_bytes()).await;
+            FileLib::creat_cookie("sign_date", user_data["user_sign_date"].to_string().replace('"',"").as_bytes()).await;
+            FileLib::creat_cookie("music_number", user_data["user_music_number"].to_string().replace('"',"").as_bytes()).await;
+    
+
+
+            match FileLib::read_cookie("account").await{
+                Ok(ok)=> RequestLib::download("http://127.0.0.1:8000/api/download",&ok.as_str(),"avatar.png").await,
+                Err(err)=>eprintln!("{}",err)
+            }
+
+           
+        });
+    
     });
+
     ui.on_sign(move|SignData|{
         
 
-        let body=format!("{},{},{},{},{},{}", SignData.account.as_str(),SignData.password.as_str(),SignData.name.as_str(),SignData.age.as_str(),SignData.age.as_str(),SignData.intro.as_str());
+        let body=format!("{},{},{},{},{},{}", SignData.account.as_str(),SignData.password.as_str(),SignData.name.as_str(),SignData.gender.as_str(),SignData.age.as_str(),SignData.intro.as_str());
         //let user_name=SignData.name;
         tokio::spawn(async move {
             RequestLib::post("http://127.0.0.1:8000/api/user/create",body.as_str()).await;
@@ -356,18 +412,30 @@ async fn main() {
     });
     
     let _ = ui.run();
-
 }
 
-fn update_user_datas(ui:self::AppWindow){
-    ui.set_user_name(SharedString::from("123"));
+fn delete_folder_contents(folder_path: &str) -> std::io::Result<()> {
+    let path = Path::new(folder_path);
+
+    // 遍历文件夹内的内容
+    for entry in fs::read_dir(path)? {
+        let entry = entry?;
+        let entry_path = entry.path();
+
+        // 如果是文件，则直接删除
+        if entry_path.is_file() {
+            fs::remove_file(entry_path)?;
+        }
+        // 如果是文件夹，则递归调用自身进行删除
+        else if entry_path.is_dir() {
+            delete_folder_contents(entry_path.to_str().unwrap())?;
+            fs::remove_dir(entry_path)?;
+        }
+    }
+
+    Ok(())
 }
-async fn CheckUser(){
-
-}
-
-
-     fn musicplay(path: &str){
+fn musicplay(path: &str){
     println!("{}",path);
 
     let (_stream, stream_handle) = OutputStream::try_default().unwrap();

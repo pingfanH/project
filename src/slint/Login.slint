@@ -8,7 +8,8 @@ export struct SignData {
     name:string,
     gender:string,
     age:string,
-    intro:string
+    intro:string,
+    avatarpath:string
 }
 export component linetext {
     callback click-();
@@ -45,13 +46,22 @@ export global Values {
     in-out property <string> sign-gender:"请选择性别";
     in-out property <string> sign-age:"";
     in-out property <string> sign-intro:"";
+    
 
  }
 export component Signup { 
     callback signup();
     callback back();
+    callback choose-avatar();
     in-out property <string> account;
     in-out property <bool>is-selecting-gender;
+   
+    Button{
+        text: "请选择头像";
+        x:500px;
+        y:20px;
+        clicked => {root.choose-avatar();}
+    }
     LineEdit {
         visible: (Values.areunew);
         placeholder-text: "账号";
@@ -197,6 +207,7 @@ export component Login {
     in-out property <string> sign-age<=>Values.sign-age;
     in-out property <string> sign-gender<=>Values.sign-gender;
     in-out property <string> sign-intro<=>Values.sign-intro;
+    in-out property <string> avatar-path;
     in-out property <bool> douforget<=>Values.douforget;
     in-out property <bool> areunew<=>Values.areunew;
     //in-out property <bool> is-login;
@@ -204,6 +215,7 @@ export component Login {
     callback signup(SignData);
     callback click_audio();
     callback click_audio1();
+    callback choose-avatar();
     in-out property <bool> login-error:false;
     in-out property <length> width-;
     in-out property <length> height-;
@@ -328,6 +340,7 @@ export component Login {
                     age:Values.sign-age,
                     intro:Values.sign-intro,
                 });click_audio();}
+                choose-avatar => {root.choose-avatar();}
                 back => {root.click-audio1()}
 
             } 

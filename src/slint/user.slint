@@ -2,7 +2,6 @@ import {
     ComboBox, VerticalBox, HorizontalBox, GridBox, Button,
     LineEdit, ListView, GroupBox, CheckBox, TabWidget,Slider,TextEdit,StandardListView
 } from "std-widgets.slint";
-//import { UserSetting } from "setting.slint";
 
 export component Pane inherits Rectangle {
     // capture all clicks
@@ -198,17 +197,14 @@ export global Uservalues {
     in-out property <string> user-age:"15";
 }
 export component user-main{
-    in-out property <string> user-id;//<=>SettingValue.user-age;
-    in-out property <string> user-name:"1";//<=>Uservalues.user-name;
-    in-out property <string> user-avatar;//<=>SettingValue.user-avatar;
-    in-out property <string> user-intro;//<=>SettingValue.user-intro;
-    in-out property <string> user-gender;//<=>SettingValue.user-gender;
-    in-out property <string> user-age;//<=>SettingValue.user-age;
-    in-out property <string> user-sign-date;//<=>SettingValue.user-age;
+    in-out property <string> user-id;
+    in-out property <string> user-name;
+    in-out property <string> user-avatar;
+    in-out property <string> user-intro;
+    in-out property <string> user-gender;
+    in-out property <string> user-age;
+    in-out property <string> user-sign-date;
 
-    
-
-    //in-out property <string> user-age1<=>Uservalues.user-age;
 
     in-out property <int> user-music-number:0;
     in-out property <bool> is-setting<=>SettingValue.is-setting;
@@ -216,19 +212,13 @@ export component user-main{
     callback click_audio1();
 
     callback back;
-    //callback apply<=>SettingValue.apply;
-    //in-out property <string> setting-user-id;//<=>SettingValue.user-age;
-    in-out property <string>setting-user-age:user-age;//:SettingValue.user-age;
-    //in-out property <int>setting-user-age-pos:50 ;
-    //in-out property <length>setting-user-age-text-pos<=>setting-user-age;
-    in-out property <string> setting-user-name:user-name;//:SettingValue.user-name;
-    //in-out property <string> changed-user-name<=>Uservalues.user-name;
-    in-out property <string> setting-user-gender:user-gender;//:SettingValue.user-gender;
-    in-out property <string> setting-user-intro:user-intro;//:SettingValue.user-intro;
-    //in-out property <string> setting-user-sign-date;//<=>SettingValue.user-age;
+    in-out property <string>setting-user-age:user-age;
+    in-out property <string> setting-user-name:user-name;
+    in-out property <string> setting-user-gender:user-gender;
+    in-out property <string> setting-user-intro:user-intro;
     property <bool>is-selecting-gender:false;
     callback apply(UserSettingData);
-
+    
     y:0;
     Button {
         text: "编辑";
@@ -242,7 +232,7 @@ export component user-main{
     Text {
         text: "uid:"+user-id;
         visible: !root.is-setting;
-        font-size: 14px;
+        font-size: 15px;
         idArea := TouchArea {}
         x: idArea.has-hover  ? parent.width/2.3:parent.width/2.5;
         y:180px;
@@ -254,7 +244,7 @@ export component user-main{
         ListArea := TouchArea {}
         width: ListArea.has-hover  ? 110px:100px;
         x: ListArea.has-hover  ? parent.width/2.52:parent.width/2.49;
-        y:ListArea.has-hover  ? 80px:80px;
+        y:ListArea.has-hover  ? 78px:78px;
         animate width,x,y {duration: 100ms;}    
     }
     Text{
@@ -510,5 +500,4 @@ export component user-main{
         //     setting-user-intro: root.user-intro;
         // }
     }
-
 }

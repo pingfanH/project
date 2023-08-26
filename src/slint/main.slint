@@ -46,7 +46,8 @@ export component Close {
 }
 
 export component player{
-    //callback music_play();
+    callback music_play();
+    callback music-pause();
     
     Rectangle {
         background: #4d4d4d81;
@@ -77,7 +78,7 @@ export component player{
     Image {
         visible: !values.is-playing;
         PlayerArea := TouchArea { clicked => {
-            values.music_play();
+            root.music_play();
             values.is-playing=true;
             values.click_audio();
         
@@ -98,7 +99,7 @@ export component player{
     Image {
         visible: values.is-playing;
         PauseArea := TouchArea { clicked => {
-            values.music-pause();
+            root.music-pause();
             values.is-playing=false;
             values.click_audio();
         
@@ -180,7 +181,8 @@ export component AppWindow inherits Window {
     property <length> drag-area-down-x: 0;
     property <length> drag-area-down-y: 0;
     
-    callback music_play<=> values.music_play;
+    callback music_play();
+    callback music_pause();
     callback click_audio<=> values.click_audio;
     callback click_audio1<=> values.click_audio1;
     callback open_the_url(string);
@@ -190,7 +192,9 @@ export component AppWindow inherits Window {
     callback apply(UserSettingData);
     callback login(string,string);
     callback sign(SignData);
-
+    callback musicupload(string);
+    callback test(string);
+    callback choose-avatar();
     in-out property <string> user_name:"用户114514";
     in-out property <string> user_intro:"未登录";
     in-out property <string> user_gender:"未登录";
@@ -201,7 +205,7 @@ export component AppWindow inherits Window {
     in-out property <bool> is-setting<=>SettingValue.is-setting;
     in-out property <bool> is-login:false;
     in-out property <bool> show-list<=>values.show-list;
-
+    in-out property <string>avatar-path;
 
     in-out property <string> account;
     in-out property <string> password;
@@ -275,12 +279,16 @@ export component AppWindow inherits Window {
         }
 
         if(side-bar.current-item == 0) : homepage {
-
+            
+            test => {root.test("123")}
             width: 500px;
             open-url=>{root.open_the_url(url)}
         
         }
-        if(side-bar.current-item == 1) : MusicLib {width: 500px;}
+        if(side-bar.current-item == 1) : MusicLib {
+            width: 500px;
+            upload => {root.musicupload(self.music-name)}
+        }
         if(side-bar.current-item == 2) : user-main {
             width: 500px;
             user-id:root.user-id;
@@ -308,6 +316,8 @@ export component AppWindow inherits Window {
         y:parent.height -130px;
         preferred-width: parent.width -37px;
         preferred-height: 110px;
+        music_play=>{root.music-play()}
+        music-pause => {root.music-pause()}
     }
     animated := Rectangle {
         //background: #0000002c;
@@ -380,7 +390,9 @@ export component AppWindow inherits Window {
                 gender:self.sign-gender,
                 age:self.sign-age,
                 intro:self.sign-intro,
+                avatarpath:root.avatar-path
             });
+            
             root.user-name=self.sign-name;
             root.user-age=self.sign-age;
             root.user-intro=self.sign-intro;
@@ -388,6 +400,8 @@ export component AppWindow inherits Window {
             root.user-music-number=0;
             root.user-sign-date="";
         }
+        choose-avatar => {root.choose-avatar();}
+        avatar-path: avatar-path;
             //back => { root.show-list = false;click_audio1()}
             background: #1C1C1C;
             click-audio => {root.click-audio()}

@@ -2,16 +2,67 @@ import {
     ComboBox, VerticalBox, HorizontalBox, GridBox, Button,
     LineEdit, ListView, GroupBox, CheckBox, TabWidget
 } from "std-widgets.slint";
+export component Upload{ 
+    in-out property <string> music-name;
+    callback upload(string);
+    callback cancel();
+    name:=LineEdit {
+        y:parent.height*0.3;
+        width: parent.width*0.5;
+        text: music-name;
+        placeholder-text: "音乐名称";
+        edited => {music-name=self.text}
+    }
+    Text {
+        y:parent.height*0.3 -20px;
+        text: "默认使用文件名";
+    }
+    upload:=Button{
+        y:parent.height*0.6;
+        width: parent.width*0.3;
+        text: "上传音乐";
+        clicked => {root.upload(music-name);name.text=""}
+    }
+    Button{
+        width: 100px;
+        text: "返回";
+        y:parent.height*0.8;
+        clicked => {root.cancel();}
+    }
 
-export component MusicLib{ 
-    // GridBox{
-    //     Row{
-    //         Image {
-    //            source: @image-url("../assets/icon/icon.png");
-    //            width: 100px;
-               
-    //         }
-    //     }
-    // }
+}
+export component MusicLib {
+    in-out property <string> music-name;
+    callback upload(string);
+    in-out property <bool>is-uploading ;
+    Button {
+        x:parent.width*0.7;
+        width: 100px;
+        height: 40px;
+        visible: !is-uploading;
+        clicked => {root.is-uploading=true;}
+    }
+    
+    animated := Rectangle {
+        width: parent.width; height: parent.height;
+        y: parent.height;
+        states [
+            visible when (root.is-uploading) : {
+                y: 0;
+            in  {
+                animate y { duration: 200ms; easing: ease; }
+            }
+            out  {
+                animate y { duration: 200ms; easing: ease; }
+            }
+            }
+        ]
 
+        if (animated.y < root.height):Upload{
+            upload => {root.upload(self.music-name);}
+            width: parent.width;
+            height: parent.height;
+            cancel => {root.is-uploading=false}
+        }
+ }
 }
