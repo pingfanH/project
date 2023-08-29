@@ -1,7 +1,7 @@
 import { StandardListView,ListView  } from "std-widgets.slint";
 import {
     ComboBox, VerticalBox, HorizontalBox, GridBox, Button,
-    LineEdit, ListView, GroupBox, CheckBox, TabWidget
+    LineEdit, ListView, GroupBox, CheckBox, TabWidget,StandardTableView
 } from "std-widgets.slint";
 export component Example inherits Window {
     width: 150px;
@@ -30,40 +30,61 @@ component Pane inherits Rectangle {
     // capture all clicks
     TouchArea {}
 }
+
 export global ListValue {
 
 }
  export component MusicList inherits Pane {
     //callback back <=> back_btn.clicked;
+    callback choose-music(string);
+    callback close();
+    in-out property <string>music-choosed ;
+    in-out property <[{user:string,name:string,public:bool}]> musiclist:[
+        { user:"2146265126",name: "ギターと孤独と蒼い惑星",public:true},
+        { name: "Let_me_do_it_for_u"},
+        { name: "桜高軽音部 - ふわふわ時間 (Single Ver.)"},
+        { name: "めありー,Orangestar - Alice in 冷凍庫"},
+        { name: "結束バンド - Distortion!!"},
+        { name: "結束バンド - 青春コンプレックス"},
+        { name: "大橋卓弥 - ありがとう"},
+        { name: "さんひ - ほろよい"},
+    ];
     width: 450px;
     height: 500px;
+
     VerticalBox {
         ListView{
-            for data in [
-                { text: "Blue",color: #ffffff},
-                { text: "Red",color: #ffffff},
-                { text: "Green",color: #ffffff},
-                { text: "Yellow",color: #ffffff},
-                { text: "Black",color: #ffffff},
-                { text: "White",color: #ffffff},
-                { text: "Magenta",color: #ffffff},
-                { text: "Cyan",color: #ffffff},
-            ] : Rectangle {
+            for data in  musiclist: Rectangle {
+                background: #000000;
+                listtouch:=TouchArea{
+                    clicked => {root.music-choosed=data.name;root.choose-music(data.name);close()}
+                }
                 height: 30px;
                 width: parent.width;
+                function textss(text:string) ->string{
+                        
+                    if(data.public){
+                        
+                        return text+" 上传者:"+data.user+" 公开";
+                    }
+                    else{
+                        return text+"  私有";
+                    }
+
+                    return text;
+                }
                 Text {
+
                     x: 0;
-                    text: data.text;
-                    color: data.color;
-                } 
+                    text: textss(data.name);
+
+                    color: listtouch.has-hover?#8d8d8d:#ffffff;
+                    animate color { 
+                        duration:200ms;
+                     }
+                    
+                }
         }
     }
-    // back_btn := 
-    // Button {
-    //     //enabled: root.is-setting;
-    //     text: "关闭";
-    //     x:parent.width;
-    //     height: self.min_height;
-    // }
 }
 }

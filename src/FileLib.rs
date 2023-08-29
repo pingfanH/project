@@ -2,6 +2,7 @@ use std::fs::File;
 use std::io::Write;
 use std::io::prelude::*;
 use std::fs;
+use std::path::Path;
 pub async fn writefile(path: &str, data: &[u8]) -> std::io::Result<()> {
     let mut file = File::create(path)?;
     match readfile(path).await{
@@ -65,8 +66,68 @@ pub async fn read_cookie(name:&str)-> Result<String, String>{
         }
     }
 }
-pub fn read_cookie_n(name:&str)->String{
-    let path=format!("C:/Program Files/P-layer/cookies/.{}",name);
-    let text = fs::read_to_string(path).unwrap();
-    text
+
+pub async fn readfilenameloop(path:&str)->Vec<serde_json::Value>{
+    let mut jsonlist:Vec<serde_json::Value>=vec![];
+    let folder_path = Path::new(path);
+    let mut lists:Vec<String>=vec![];
+    // 检查文件夹是否存在
+    if folder_path.is_dir() {
+        // 获取文件夹内所有项的迭代器
+        if let Ok(entries) = fs::read_dir(folder_path) {
+            // 遍历每个项
+            for entry in entries {
+                if let Ok(entry) = entry {
+                    // 获取项的名称
+                    let entry_name = entry.file_name();
+
+                    // 将名称转换为字符串
+                    if let Some(name) = entry_name.to_str() {
+                        //println!("{}", name);
+                        let name=name.to_string();
+                        lists.push(name);
+                    }
+                }
+            }
+        }
+    } else {
+        println!("文件夹不存在");
+    }
+
+    for list in lists {
+        println!("list:{}",list);
+        let list:Vec<_>=list.split(",").collect();
+        let jsonl=serde_json::json!({
+                "user":list[0],
+                "name":list[1],
+                "date":list[2],
+                "public":str2bool(list[3]),
+                
+        
+        });
+        jsonlist.push(jsonl);
+
+};
+jsonlist
+}
+
+pub async fn selectfromjson(jsonlist:Vec<serde_json::Value>,select:&str,value:&str)->serde_json::Value{
+
+    //let mut selectedjson:serde_json::Value;
+    for i in jsonlist{
+
+            if i[select]==value{
+                return i;
+            }
+        
+        
+    }.into()
+    
+}
+pub fn str2bool(s: &str) -> Option<bool> {
+    match s.to_lowercase().as_str() {
+        "true" | "t" | "yes" | "y" | "1" => Some(true),
+        "false" | "f" | "no" | "n" | "0" => Some(false),
+        _ => None,
+    }
 }

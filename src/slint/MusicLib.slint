@@ -4,37 +4,76 @@ import {
 } from "std-widgets.slint";
 export component Upload{ 
     in-out property <string> music-name;
-    callback upload(string);
+    callback upload(string,bool);
     callback cancel();
+    in-out property <bool> is-public;
+    in-out property <bool> view-public;
+    Text {
+        y:parent.height*0.1 -20px;
+        text: "默认使用文件名";
+    }
     name:=LineEdit {
-        y:parent.height*0.3;
+        y:parent.height*0.1;
         width: parent.width*0.5;
         text: music-name;
         placeholder-text: "音乐名称";
         edited => {music-name=self.text}
     }
-    Text {
-        y:parent.height*0.3 -20px;
-        text: "默认使用文件名";
+    Rectangle {
+        hover:=TouchArea {}
+        y:parent.height*0.1 +40px;
+        width:80px;
+        height:30px;
+        CheckBox {
+            x: 0;
+            toggled => {
+                if(is-public){
+                    is-public=false
+                }
+                else{
+                    is-public=true
+                }
+            }
+            width:20px;
+            height:20px;
+            text: "公开";
+        }
+        publictext:=Text{
+            visible: is-public;
+            y:parent.height;
+            x:0;
+            text: "其他人可以在音乐馆看到你上传的音乐！";
+        }
+        Text {
+            visible: (hover.has-hover?true:false)&&!is-public;
+            //y:parent.height*0.3;
+            x:parent.width;
+            text: "是否在音乐馆可见";
+        }
     }
+
+    
+
+
     upload:=Button{
-        y:parent.height*0.6;
+        y:parent.height*0.1 +100px;
         width: parent.width*0.3;
         text: "上传音乐";
-        clicked => {root.upload(music-name);name.text=""}
+        clicked => {root.upload(music-name,root.is-public);name.text=""}
     }
     Button{
         width: 100px;
         text: "返回";
-        y:parent.height*0.8;
+        y:parent.height*0.1 +150px;
         clicked => {root.cancel();}
     }
 
 }
 export component MusicLib {
     in-out property <string> music-name;
-    callback upload(string);
+    callback upload(string,bool);
     in-out property <bool>is-uploading ;
+    in-out property <bool> is-public;
     Button {
         x:parent.width*0.7;
         width: 100px;
@@ -59,7 +98,9 @@ export component MusicLib {
         ]
 
         if (animated.y < root.height):Upload{
-            upload => {root.upload(self.music-name);}
+            upload => {
+                root.is-public=self.is-public;
+                root.upload(self.music-name,self.is-public);}
             width: parent.width;
             height: parent.height;
             cancel => {root.is-uploading=false}
