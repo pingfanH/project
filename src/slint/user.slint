@@ -191,7 +191,7 @@ export global SettingValue {
 }
 export global Uservalues {
     in-out property <string> user-name:"用户114514";
-    in-out property <string> user-avatar:"C:/Program Files/P-layer/data/user-avatar/avatar.png";
+    //in-out property <image> user-avatar;
     in-out property <string> user-intro:"简介";
     in-out property <string> user-gender:"无";
     in-out property <string> user-age:"15";
@@ -199,7 +199,7 @@ export global Uservalues {
 export component user-main{
     in-out property <string> user-id;
     in-out property <string> user-name;
-    in-out property <string> user-avatar;
+    in-out property <image> user-avatar<=>avatar.source;
     in-out property <string> user-intro;
     in-out property <string> user-gender;
     in-out property <string> user-age;
@@ -238,9 +238,9 @@ export component user-main{
         y:180px;
         animate font-size,x,y {duration: 100ms;}
     }
-    Image{
+    avatar:=Image{
         visible: !root.is-setting;
-        source: @image-url("C:/Program Files/P-layer/data/user-avatar/avatar.png");
+
         ListArea := TouchArea {}
         width: ListArea.has-hover  ? 110px:100px;
         x: ListArea.has-hover  ? parent.width/2.52:parent.width/2.49;

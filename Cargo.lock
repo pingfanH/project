@@ -3073,6 +3073,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "p-layer"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "dotenv",
+ "eval",
+ "futures",
+ "image",
+ "open",
+ "regex",
+ "reqwest",
+ "rfd",
+ "rodio",
+ "serde",
+ "serde_json",
+ "slint",
+ "slint-build",
+ "tokio",
+ "tray-item",
+ "windres",
+]
+
+[[package]]
 name = "padlock"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3255,28 +3278,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "18fb31db3f9bddb2ea821cde30a9f70117e3f119938b5ee630b7403aa6e2ead9"
 dependencies = [
  "unicode-ident",
-]
-
-[[package]]
-name = "project"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "dotenv",
- "eval",
- "futures",
- "open",
- "regex",
- "reqwest",
- "rfd",
- "rodio",
- "serde",
- "serde_json",
- "slint",
- "slint-build",
- "tokio",
- "tray-item",
- "windres",
 ]
 
 [[package]]

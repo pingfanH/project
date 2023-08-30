@@ -1,4 +1,7 @@
 use std::fs::File;
+use std::io;
+use std::io::BufReader;
+use std::io::BufWriter;
 use std::io::Write;
 use std::io::prelude::*;
 use std::fs;
@@ -130,4 +133,15 @@ pub fn str2bool(s: &str) -> Option<bool> {
         "false" | "f" | "no" | "n" | "0" => Some(false),
         _ => None,
     }
+}
+pub async fn copyfile(src_path: &str, dest_path: &str) -> io::Result<()> {
+    let src_file = File::open(src_path)?;
+    let dest_file = File::create(dest_path)?;
+
+    let mut reader = BufReader::new(src_file);
+    let mut writer = BufWriter::new(dest_file);
+
+    io::copy(&mut reader, &mut writer)?;
+
+    Ok(())
 }

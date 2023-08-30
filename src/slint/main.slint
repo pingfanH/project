@@ -1,12 +1,13 @@
 
 import { setting } from "setting.slint";
-import { list,MusicList } from "list.slint";
+import { MusicList } from "list.slint";
 import { user-main } from "user.slint";
 import { homepage } from "homepage.slint";
 import { MusicLib } from "MusicLib.slint";
 import { SideBar } from "SideBar.slint";
 import { SettingValue,UserSetting } from "user.slint";
 import { Login,SignData } from "Login.slint";
+import { musiclistdata } from "list.slint";
 export struct UserSettingData {
     name:string,
     gender:string,
@@ -195,7 +196,10 @@ export component AppWindow inherits Window {
     callback musicupload(string,bool);
     callback test(string);
     callback choose-avatar();
-    callback choose-music(string);
+    callback choose-music(musiclistdata);
+    callback tryplay(musiclistdata);
+    callback collect(musiclistdata);
+    callback refresh();
 
     in-out property <string> user_name:"用户114514";
     in-out property <string> user_intro:"未登录";
@@ -207,7 +211,19 @@ export component AppWindow inherits Window {
     in-out property <bool> is-setting<=>SettingValue.is-setting;
     in-out property <bool> is-login:false;
     in-out property <bool> show-list<=>values.show-list;
-    in-out property <[{user:string,name:string,public:bool}]> musiclist;
+    in-out property <image> user-avatar;
+
+    in-out property <[{user:string,name:string,date:string,public:bool}]> musiclist;
+    in-out property <[{user:string,name:string,date:string,public:bool}]> publicmusic:[
+        { user:"2146265126",name: "sakura",date:"20230829160017"},
+        { user:"2146265126",name: "Let_me_do_it_for_u"},
+        { name: "桜高軽音部 - ふわふわ時間 (Single Ver.)"},
+        { name: "めありー,Orangestar - Alice in 冷凍庫"},
+        { name: "結束バンド - Distortion!!"},
+        { name: "結束バンド - 青春コンプレックス"},
+        { name: "大橋卓弥 - ありがとう"},
+        { name: "さんひ - ほろよい"},
+    ];
 
     in-out property <string>avatar-path;
 
@@ -272,7 +288,6 @@ export component AppWindow inherits Window {
         }
     }
     HorizontalLayout {
-        
         visible: root.is-login;
         side-bar := SideBar {
             title: @tr("P-layer");
@@ -290,6 +305,10 @@ export component AppWindow inherits Window {
         if(side-bar.current-item == 1) : MusicLib {
             width: 500px;
             upload => {root.musicupload(self.music-name,self.is-public)}
+            tryplay => {root.tryplay(self.othermusicdata)}
+            collect => {root.collect(self.othermusicdata)}
+            publicmusic<=>root.publicmusic;
+            refresh=>{root.refresh();}
         }
         if(side-bar.current-item == 2) : user-main {
             width: 500px;
@@ -308,6 +327,7 @@ export component AppWindow inherits Window {
                 age:self.setting-user-age,
                 intro:self.setting-user-intro
             });}
+            user-avatar:root.user-avatar;
         }
         if(side-bar.current-item == 3) : setting {width: 500px;}
         // if(side-bar.current-item == 4) : AboutPage {}
@@ -320,6 +340,7 @@ export component AppWindow inherits Window {
         preferred-height: 110px;
         music_play=>{root.music-play()}
         music-pause => {root.music-pause()}
+        
     }
     animated := Rectangle {
         //background: #0000002c;
@@ -347,10 +368,11 @@ export component AppWindow inherits Window {
         if (animated.y < root.height): MusicList {
             width: width-;
             height: height-;
-            choose-music=>{root.choose-music(self.music-choosed);}
+            choose-music=>{root.choose-music(self.music-choosed);values.is-playing=true;root.is-playing=true}
             close=>{show-list=false;click-audio()}
             // visible: root.show-list&&root.is-login;
             //back => { root.show-list = false;click_audio1()}
+            //is-playing<=>root.is-playing;
             background: #000000;
             musiclist:root.musiclist;
         }

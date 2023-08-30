@@ -247,6 +247,8 @@ export component Login {
             y:140px;
             edited => {root.password=self.text}
          }
+         
+         
         Button { 
             visible: !(douforget||areunew);
             width: parent.width/1.5;
@@ -254,6 +256,7 @@ export component Login {
             text: "确定";
             clicked => {login();click_audio()}
           }
+
         linetext{
             visible-: !(douforget||areunew);
             text-: "忘记密码?";

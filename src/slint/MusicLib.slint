@@ -2,6 +2,7 @@ import {
     ComboBox, VerticalBox, HorizontalBox, GridBox, Button,
     LineEdit, ListView, GroupBox, CheckBox, TabWidget
 } from "std-widgets.slint";
+import { musiclistdata } from "list.slint";
 export component Upload{ 
     in-out property <string> music-name;
     callback upload(string,bool);
@@ -69,19 +70,156 @@ export component Upload{
     }
 
 }
+
+export component ChooseMusic{
+    in-out property <bool>is-choose;
+    in-out property <musiclistdata>othermusicdata;
+    callback tryplay(musiclistdata);
+    callback collect(musiclistdata);
+
+    Rectangle {
+        width: 300px;
+        height: 200px;
+        background: #000000;
+        function choose-name(text:string) ->string{
+                    
+            return text+"\n上传者:"+othermusicdata.user;
+        }
+        TouchArea {}
+        Text {y:10px;text: choose-name(othermusicdata.name);}
+        Button {
+            x: 0;
+            text: "加入列表";
+            clicked => {collect({
+                user:othermusicdata.user,
+                name:othermusicdata.name,
+                date:othermusicdata.date
+            })}
+        }
+        Button {
+            x: parent.width*0.8;
+            text: "试听";
+            clicked => {tryplay({
+                user:othermusicdata.user,
+                name:othermusicdata.name,
+                date:othermusicdata.date
+            })}
+        } 
+        Button {
+            text: "返回";
+            clicked => {is-choose=false}
+        }
+    }
+
+}
+
+export component PublicMusicList {
+    in-out property <bool>is-choose;
+    in-out property <musiclistdata>othermusicdata;
+    callback tryplay(musiclistdata);
+    callback collect(musiclistdata);
+    in-out property <[{user:string,name:string,date:string,public:bool}]> publicmusic;
+            ListView {
+            for data in publicmusic: Rectangle {
+                listtouch:=TouchArea{
+                    clicked => {is-choose=true;
+                        othermusicdata={
+                        user:data.user,
+                        name:data.name,
+                        date:data.date
+                    };}
+                }
+            height: 40px;
+            width: parent.width;
+           
+            Text {
+                function textss(text:string) ->string{
+                    
+                    return text+" || 上传者:"+data.user+" || 日期:"+data.date;
+                }
+                //x: 0;
+                text: textss(data.name);
+
+                color: listtouch.has-hover?#8d8d8d:#ffffff;
+                animate color { 
+                    duration:200ms;
+                 }
+            }
+        }
+}
+    animated := Rectangle {
+        width: parent.width; height: parent.height;
+        y: parent.height;
+        states [
+            visible when (root.is-choose) : {
+                y: 0;
+            in  {
+                animate y { duration: 200ms; easing: ease; }
+            }
+            out  {
+                animate y { duration: 200ms; easing: ease; }
+            }
+            }
+        ]
+
+        if (animated.y < root.height):ChooseMusic{
+            is-choose<=>root.is-choose;
+            width: parent.width;
+            height: parent.height;
+            othermusicdata<=>root.othermusicdata;
+            tryplay => {tryplay(self.othermusicdata)}
+            collect => {collect(self.othermusicdata)}
+        }
+    }
+}
 export component MusicLib {
     in-out property <string> music-name;
     callback upload(string,bool);
-    in-out property <bool>is-uploading ;
+    callback tryplay(musiclistdata);
+    callback refresh();
+    callback collect(musiclistdata);
+
+    in-out property <musiclistdata>othermusicdata;
+    in-out property <bool>is-uploading;
     in-out property <bool> is-public;
+    in-out property <[{user:string,name:string,date:string,public:bool}]> publicmusic;
     Button {
+        text: "上传音乐";
         x:parent.width*0.7;
+        y:0;
         width: 100px;
         height: 40px;
         visible: !is-uploading;
         clicked => {root.is-uploading=true;}
     }
-    
+    Button {
+        text: "刷新列表";
+        x:parent.width*0.3;
+        y:0;
+        width: 100px;
+        height: 40px;
+        visible: !is-uploading;
+        clicked => {root.refresh();}
+    }
+
+    PublicMusicList {
+        y: 40px;
+        visible: !is-uploading;
+        width:100%;
+        height:100%;
+        publicmusic<=>publicmusic;
+        tryplay => {
+            root.othermusicdata=self.othermusicdata;
+            tryplay(self.othermusicdata);
+        }
+        collect => {
+            root.othermusicdata=self.othermusicdata;
+            collect(self.othermusicdata);
+        }
+        
+    }
+
+
     animated := Rectangle {
         width: parent.width; height: parent.height;
         y: parent.height;

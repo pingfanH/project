@@ -7,7 +7,7 @@ use anyhow::Context;
 use futures::future::{Fuse, FusedFuture, FutureExt};
 //use itertools::Itertools;
 use serde::Deserialize;
-use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel};
+use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel, Image, SharedPixelBuffer, Rgba8Pixel};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::{Path, PathBuf};
@@ -25,9 +25,9 @@ pub struct FeatureSettings {
 #[derive(Debug)]
 pub enum CargoMessage {
     Quit,
-    SetValue(String,String,Option<Vec<(slint::SharedString, bool, slint::SharedString)>>),
+    SetValue(String,String,Option<Vec<(slint::SharedString, slint::SharedString, bool, slint::SharedString)>>),
     SetPlaying(bool),
-    GetValues()
+    SetAvatar(String)
 }
 
 pub struct CargoWorker {
@@ -96,8 +96,8 @@ async fn cargo_worker_loop(
             CargoMessage::SetPlaying(Value) => {
                 //trait_set1.set(set_playing(handle.clone(),Value).fuse())
             },
-            CargoMessage::GetValues() => {
-                trait_set1.set(get_values(handle.clone()).fuse());
+            CargoMessage::SetAvatar(avatarpath) => {
+                trait_set1.set(set_avatar(handle.clone(),avatarpath).fuse());
             }
     }
 }
@@ -108,8 +108,8 @@ fn parse_string_to_bool(string: &str) -> Option<bool> {
     }
 }
 }
-async fn set_value(handle: slint::Weak<AppWindow>,function:String,value:String,list:Option<Vec<(slint::SharedString, bool, slint::SharedString)>>){
-    let mut model: Arc<Rc<dyn Model<Data = (SharedString, bool, SharedString)>>>;
+async fn set_value(handle: slint::Weak<AppWindow>,function:String,value:String,list:Option<Vec<(slint::SharedString, slint::SharedString, bool, slint::SharedString)>>){
+    let mut model: Arc<Rc<dyn Model<Data = (SharedString,SharedString, bool, SharedString)>>>;
     
     
     handle
@@ -139,15 +139,25 @@ async fn set_value(handle: slint::Weak<AppWindow>,function:String,value:String,l
                 },
                 "set_avatar_path" => h.set_avatar_path(value.into()),
                 "set_musiclist" => {
-                   let list:Vec<(slint::SharedString, bool, slint::SharedString)>= match list {
+                   let list:Vec<(slint::SharedString, slint::SharedString, bool, slint::SharedString)>= match list {
                         Some(list) =>list,
                         None => todo!(),
                     };
                     println!("list{:?}",list.clone());
-                    let mut musiclistrc1: ModelRc<(slint::SharedString, bool, slint::SharedString)> =
+                    let mut musiclistrc1: ModelRc<(slint::SharedString, slint::SharedString, bool, slint::SharedString)> =
                         ModelRc::new(VecModel::from(list));
                     h.set_musiclist(musiclistrc1);
                 },
+                "set_publicmusic" => {
+                    let list:Vec<(slint::SharedString, slint::SharedString, bool, slint::SharedString)>= match list {
+                         Some(list) =>list,
+                         None => todo!(),
+                     };
+                     println!("list{:?}",list.clone());
+                     let mut musiclistrc1: ModelRc<(slint::SharedString, slint::SharedString, bool, slint::SharedString)> =
+                         ModelRc::new(VecModel::from(list));
+                     h.set_publicmusic(musiclistrc1);
+                 },
                 &_ => todo!(),
             }
             // let code =format!("h.{}(SharedString::from({}))",function, value);
@@ -164,17 +174,24 @@ async fn set_playing(handle: slint::Weak<AppWindow>,value:bool){
         })
         .unwrap();
 }
-async fn get_values(handle: slint::Weak<AppWindow>)->SharedString{
-    let mut account:SharedString=SharedString::from("value");
-    let mut accountclone:SharedString=account.clone();
-
+async fn set_avatar(handle: slint::Weak<AppWindow>,avaterpath:String){
     handle
         .clone()
         .upgrade_in_event_loop(move |h| {
-            account=h.get_account();
+            let mut cat_image = image::open(avaterpath).expect("Error loading cat image").into_rgba8();
+
+            image::imageops::colorops::brighten_in_place(&mut cat_image, 20);
+    
+            let buffer = SharedPixelBuffer::<Rgba8Pixel>::clone_from_slice(
+                cat_image.as_raw(),
+                cat_image.width(),
+                cat_image.height(),
+            );
+            let image = Image::from_rgba8(buffer);
+
+            h.set_user_avatar(image);
         })
         .unwrap();
-    accountclone
 }
 
 pub fn str2bool(s: &str) ->bool {

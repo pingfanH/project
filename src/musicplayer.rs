@@ -1,4 +1,4 @@
-use std::io;
+use std::io::{self, Cursor, SeekFrom, Seek};
 use std::ops::Deref;
 use std::{thread, fs::File};
 use std::time::Duration;
@@ -14,6 +14,7 @@ pub enum MusicMessage {
     Pause,
     ChangeMusic(String),
     ChangeVolume(u32),
+    TryPlay(Vec<u8>)
 }
 
 pub struct MusicPlayer {
@@ -96,6 +97,7 @@ async fn music_player_loop(mut r: UnboundedReceiver<MusicMessage>,mut decoder:De
                         sink.pause();
                         sink.append(new_source);
                         sink.play();
+                        music_playing=true;
                     } else {
                         println!("无法解码音频文件！");
                     }
@@ -107,8 +109,28 @@ async fn music_player_loop(mut r: UnboundedReceiver<MusicMessage>,mut decoder:De
                 println!("Changing volume to: {}", new_volume);
                 volume = new_volume;
             }
+            MusicMessage::TryPlay(file)=>{
+                sink.stop();
+                sink.pause();
+                let mut file = Cursor::new(file);
+
+                // 在需要定位的位置调用seek方法
+                file.seek(SeekFrom::Start(2)).unwrap();
+                let source = Decoder::new(file).unwrap();
+                sink.append(source);
+                sink.play();
+                music_playing=true;
+            }
         }
     }
 
     Ok(())
 }
+
+// async fn playstreammusic(file:Vec<u8>){
+//     let (_stream, stream_handle) = OutputStream::try_default().unwrap();
+    
+//     let sink = Sink::try_new(&stream_handle).unwrap();
+//     sink.append(source);
+//     sink.sleep_until_end();
+// }

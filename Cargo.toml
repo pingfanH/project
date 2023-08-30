@@ -1,5 +1,5 @@
 [package]
-name = "project"
+name = "p-layer"
 #build = "build.rs"
 version = "0.1.0"
 edition = "2021"
@@ -27,7 +27,10 @@ futures = "0.3"
 rfd="*"
 eval = "0.4.3"
 dotenv = "0.15.0"
+image="*"
 [target.'cfg(windows)'.build-dependencies]
+dotenv = "0.15"
 windres = "*"
 slint-build = "1.1.1"
-
+[build]
+run = "dotenv::dotenv().ok();"
