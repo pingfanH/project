@@ -2,25 +2,14 @@ use std::fs::Metadata;
 use std::sync::Arc;
 
 use super::{AppWindow};
-use anyhow::Context;
 
-use futures::future::{Fuse, FusedFuture, FutureExt};
-//use itertools::Itertools;
-use serde::Deserialize;
+
+use futures::future::{Fuse,FutureExt};
+
 use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel, Image, SharedPixelBuffer, Rgba8Pixel};
-use std::cell::RefCell;
-use std::collections::{HashMap, HashSet, VecDeque};
-use std::path::{Path, PathBuf};
 use std::rc::Rc;
 use std::str::FromStr;
-use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
-use eval::eval;
-#[derive(Debug)]
-pub struct FeatureSettings {
-    enabled_features: Vec<SharedString>,
-    enable_default_features: bool,
-}
 
 #[derive(Debug)]
 pub enum CargoMessage {
@@ -30,6 +19,7 @@ pub enum CargoMessage {
     SetAvatar(String)
 }
 
+#[derive(Debug)]
 pub struct CargoWorker {
     pub channel: UnboundedSender<CargoMessage>,
     worker_thread: std::thread::JoinHandle<()>,

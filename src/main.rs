@@ -6,6 +6,9 @@ use std::cell::RefCell;
 use std::env;
 use std::fs::File;
 use std::io::BufReader;
+use std::io::Cursor;
+use std::io::Seek;
+use std::io::SeekFrom;
 use std::path;
 use std::path::Path;
 use std::pin::Pin;
@@ -26,26 +29,22 @@ use slint::LogicalPosition;
 use slint::SharedString;
 use std::collections::HashMap;
 use std::fs;
-
 use rfd::FileDialog;
-
 use std::sync::mpsc;
 use tray_item::{IconSource, TrayItem};
-
 mod RequestLib;
 mod json;
 mod FileLib;
 mod slinttrait;
 mod musicplayer;
-
 use serde_json::json;
 use std::sync::{Arc, RwLock};
 use std::cell::Cell;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use tokio::task;
-
 use crate::slinttrait::CargoMessage;
 slint::include_modules!();
+
 #[derive(Debug)]
 struct User {
     user_token:String,
@@ -74,10 +73,14 @@ enum Message {
     Test,
     Test1
 }
-#[tokio::main]
+const PERSOUND: &[u8] = include_bytes!("assets/audios/per");
+const CLICKSOUND1: &[u8] = include_bytes!("assets/audios/keypress.mp3");
+const CLICKSOUND2: &[u8] = include_bytes!("assets/audios/notes.mp3");
+const AVATAR: &[u8] = include_bytes!("assets/icon/avatar.png");
 
+#[tokio::main]
 async fn main() {
-    env::set_var("SERVER_URL", "http://49.232.237.42:8000/");
+    env::set_var("SERVER_URL", "http://127.0.0.1:8000/");
     env::set_var("APP_PATH", "C:/Program Files/P-layer/");
 
     let SERVER_URL = env::var("SERVER_URL").expect("SERVER_URL not found in .env file");
@@ -85,16 +88,42 @@ async fn main() {
     perready().await;
     
     let ui: AppWindow= AppWindow::new().unwrap();
+
+    // let cargo_worker = Arc::new(slinttrait::CargoWorker::new(&ui));
+    // let cargoworkerarc = cargo_worker.clone();
+
     let cargo_worker = slinttrait::CargoWorker::new(&ui);
     let filename=format!("{}data/music/per",APP_PATH);
     println!("{filename}");
-    let file = File::open(filename).unwrap();
+    let mut file = Cursor::new(PERSOUND.to_vec());
+    file.seek(SeekFrom::Start(2)).unwrap();
+   // let source = Decoder::new(file).unwrap();
+    //let file = File::open(filename).unwrap();
     let decoder = Decoder::new(file).unwrap();
-    let musicplayer = musicplayer::MusicPlayer::new(decoder);
+
+    let musicplayer=musicplayer::MusicPlayer::new(decoder);
     let musicplayerclannel=musicplayer.channel.clone();
-    let cargo_channel = cargo_worker.channel.clone();
-    
-    Apprun(&ui, musicplayer,cargo_worker).await;
+
+    // let musicplayer = Arc::new(musicplayer::MusicPlayer::new(decoder));
+    // let musicplayerclannel=musicplayer.channel.clone();
+     let musicplayerarc=Arc::new(musicplayer);
+     let cargoarc=Arc::new(cargo_worker);
+
+    // let cargo_channel = cargo_worker.channel.clone();
+    // let cargoarc=Arc::new(cargo_channel);
+
+    // let musicplayerarc1=musicplayerarc.clone();
+    // let musicplayerarc1=match Arc::try_unwrap(musicplayerarc1){
+    //     Ok(ok)=>ok,
+    //     Err(err)=>todo!("errrrrr"),
+    // };
+    // let cargoarc1=cargoarc.clone();
+    // let cargoarc1=match Arc::try_unwrap(cargoarc1){
+    //     Ok(ok)=>ok,
+    //     Err(err)=>todo!("errrrrr"),
+    // };
+
+   
    
     
 
@@ -179,8 +208,21 @@ async fn main() {
                         //cargo_channel.send(CargoMessage::SetPlaying(false)).unwrap();
                     }
                     Ok(Message::Run) => {
-
-                        let _ = ui.run();
+                        let cargoworkerarc=cargoarc.clone();
+                        let musicplayerarc=musicplayerarc.clone();
+                        // let _cargoarc=Arc::try_unwrap(cargoworkerarc);
+                        // match  _cargoarc{
+                        //     Ok(ok)=>print!("success"),
+                        //     Err(err)=>print!("faild"),
+                        // }
+                        // let musicplayerarc=match Arc::try_unwrap(musicplayerarc.clone()){
+                        //     Ok(ok)=>ok,
+                        //     Err(err)=>todo!(""),
+                        // };
+                        // Apprun(&ui,musicplayerarc,cargoarc).await;
+                        Apprun(&ui,musicplayerarc,cargoworkerarc).await;
+                       
+                        //let _ = ui.run();
 
                         
                     }
@@ -192,8 +234,11 @@ async fn main() {
 
 }
 
-async fn Apprun(ui: &AppWindow, musicplayer:MusicPlayer,cargo_worker:CargoWorker) {
-        env::set_var("SERVER_URL", "http://49.232.237.42:8000/");
+async fn Apprun(ui: &AppWindow, musicplayer:Arc<MusicPlayer>,cargo_worker:Arc<CargoWorker>) {
+
+    let musicplayerarc1=musicplayer.clone();
+    let cargoarc1=cargo_worker.clone();
+    env::set_var("SERVER_URL", "http://127.0.0.1:8000/");
     env::set_var("APP_PATH", "C:/Program Files/P-layer/");
     let SERVER_URL = env::var("SERVER_URL").expect("SERVER_URL not found in .env file");
     let APP_PATH = env::var("APP_PATH").expect("APP_PATH not found in .env file");
@@ -201,22 +246,18 @@ async fn Apprun(ui: &AppWindow, musicplayer:MusicPlayer,cargo_worker:CargoWorker
     let handle = ui.as_weak();
     let hanel_close = ui.as_weak();
     
-    let musicplayer=Arc::new(musicplayer);
-    let set_values=ui.as_weak();
+    let musicplayer=musicplayerarc1.clone();
     
-        let mut istoken:bool=false;
+    let mut istoken:bool=false;
 
-        let mut cookie="".to_string();
-        match FileLib::readfile("C:/Program Files/P-layer/cookies/.token").await {
-            Ok(content) => {{
-                cookie=content;
-                istoken=true;
-            }},
-            Err(e) => println!("{}", e),
-        };
-        println!("{}",cookie);
+    let cookie=match FileLib::readfile("C:/Program Files/P-layer/cookies/.token").await{
+        Ok(ok)=>{istoken=true;ok},
+        Err(err)=>{istoken=false;"err"}.to_owned(),
+    };
+    
+    println!("{}",cookie);
 
-        if(istoken){
+    if(istoken){
 
                     ui.set_is_login(true);
                     match FileLib::read_cookie("name").await{
@@ -249,68 +290,35 @@ async fn Apprun(ui: &AppWindow, musicplayer:MusicPlayer,cargo_worker:CargoWorker
                     }
         };
 
-        let mut cat_image = image::open("C:/Program Files/P-layer/data/user-avatar/avatar.png").expect("Error loading cat image").into_rgba8();
+    let mut cat_image = image::load_from_memory(AVATAR).expect("err").into_rgba8();
 
-        image::imageops::colorops::brighten_in_place(&mut cat_image, 20);
+    image::imageops::colorops::brighten_in_place(&mut cat_image, 20);
 
-        let buffer = SharedPixelBuffer::<Rgba8Pixel>::clone_from_slice(
-            cat_image.as_raw(),
-            cat_image.width(),
-            cat_image.height(),
-        );
-        let image = Image::from_rgba8(buffer);
-        ui.set_user_avatar(image);
-        if let Ok(entries) = fs::read_dir(&format!("C:/Program Files/P-layer/data/musiclist/")) {
-            let has_files = entries
-            .filter_map(Result::ok)
-            .any(|entry| entry.file_type().ok().map(|ft| ft.is_file()).unwrap_or(false));        
-            if has_files{
+    let buffer = SharedPixelBuffer::<Rgba8Pixel>::clone_from_slice(
+        cat_image.as_raw(),
+        cat_image.width(),
+        cat_image.height(),
+    );
+    let image = Image::from_rgba8(buffer);
+    ui.set_user_avatar(image);
+    if let Ok(entries) = fs::read_dir(&format!("C:/Program Files/P-layer/data/musiclist/")) {
+        let has_files = entries
+        .filter_map(Result::ok)
+        .any(|entry| entry.file_type().ok().map(|ft| ft.is_file()).unwrap_or(false));        
+        if has_files{
 
 
-        let account=match FileLib::read_cookie("account").await{
-            Ok(account)=>{        
-                let jsonstr=match RequestLib::get(format!("{}api/getmusiclist/{}/all",SERVER_URL,account).as_str()).await{
-                Ok(ok)=>ok,
-                Err(err)=>todo!(),
-            };
-            //println!("{}",jsonstr);
-            let musicList: Vec<MusicList> = serde_json::from_str(jsonstr.as_str()).unwrap();
-            println!("{:?}",musicList);
-            let mut musiclist: Vec<(slint::SharedString, slint::SharedString, bool, slint::SharedString)> = Vec::new();
-            for list in musicList{
-                println!("{:?}",list);
-                musiclist.push((list.date.clone().into(),list.name.clone().into(),list.public.clone(),list.user.clone().into()));
-                let path=format!("C:/Program Files/P-layer/data/musiclist/{},{},{},{}",<std::string::String as Into<String>>::into(list.user.clone().into()),<std::string::String as Into<String>>::into(list.name.clone().into()),list.date,list.public);
-                FileLib::writefile(path.as_str(), b"").await;
-            };
-            println!("{:?}",musiclist);
-            let mut musiclistrc: ModelRc<(slint::SharedString, slint::SharedString,bool, slint::SharedString)> =
-            ModelRc::new(VecModel::from(musiclist));
-            //println!("musiclistrc{:#?}",musiclistrc);
-        ui.set_musiclist(musiclistrc);
-    
-    
-    
-    let publicjsonstr=RequestLib::get(format!("{}api/getmusiclistall/true",SERVER_URL).as_str()).await.unwrap();
-            //println!("{}",jsonstr);
-            let publicmusiclist: Vec<MusicList> = serde_json::from_str(publicjsonstr.as_str()).unwrap();
-            println!("{:?}",publicmusiclist);
-            let mut publicmusicList: Vec<(slint::SharedString, slint::SharedString, bool, slint::SharedString)> = Vec::new();
-            for list in publicmusiclist{
-                println!("{:?}",list);
-                publicmusicList.push((list.date.clone().into(),list.name.clone().into(),list.public.clone(),list.user.clone().into()));
-                let path=format!("C:/Program Files/P-layer/data/publicmusicList/{},{},{}",<std::string::String as Into<String>>::into(list.user.clone().into()),<std::string::String as Into<String>>::into(list.name.clone().into()),list.date);
-                FileLib::writefile(path.as_str(), b"").await;
-            };
-            println!("{:?}",publicmusicList);
-            let mut pubmusiclistrc: ModelRc<(slint::SharedString, slint::SharedString,bool, slint::SharedString)> =
-            ModelRc::new(VecModel::from(publicmusicList));
-            //println!("musiclistrc{:#?}",musiclistrc);
-        
-        
-        ui.set_publicmusic(pubmusiclistrc);},
-            Err(err)=>println!(""),
-        };
+    let account=FileLib::read_cookie("account").await.unwrap();
+    let cargo_channel = cargoarc1.channel.clone();
+    let cargo_channe2 = cargoarc1.channel.clone();
+    let SERVER_URL1=SERVER_URL.clone();
+    let SERVER_URL2=SERVER_URL.clone();
+    update_my_music_list(SERVER_URL1,account,cargo_channel).await;
+
+
+    update_pub_music_list(SERVER_URL2,cargo_channe2).await;
+
+
     };
     };
 
@@ -330,7 +338,7 @@ async fn Apprun(ui: &AppWindow, musicplayer:MusicPlayer,cargo_worker:CargoWorker
     //关闭窗口
 
     ui.on_close_window(move ||{
-        musicplay("C:/Program Files/P-layer/data/audios/notes.mp3");
+        musicplay(CLICKSOUND2);
         hanel_close.upgrade().unwrap().hide().unwrap();
     });
     //跳转到url
@@ -341,17 +349,17 @@ async fn Apprun(ui: &AppWindow, musicplayer:MusicPlayer,cargo_worker:CargoWorker
     //播放点击音效1,2
     ui.on_click_audio(move ||{
         thread::spawn(|| {
-            musicplay("C:/Program Files/P-layer/data/audios/keypress.mp3");
+            musicplay(CLICKSOUND1);
         });
     });
 
     ui.on_click_audio1(move ||{
         thread::spawn(|| {
-            musicplay("C:/Program Files/P-layer/data/audios/notes.mp3");
+            musicplay(CLICKSOUND2);
         });
     });
     ui.on_test(move|value|{
-        let cargo_channel = cargo_worker.channel.clone();
+        //let cargo_channel = cargo_worker.channel.clone();
         
         
         //let message=cargo_channel.send(CargoMessage::GetValues()).unwrap();
@@ -368,6 +376,8 @@ async fn Apprun(ui: &AppWindow, musicplayer:MusicPlayer,cargo_worker:CargoWorker
     let SERVER_URLclone2=SERVER_URLclone.clone();
     let SERVER_URLclone3=SERVER_URLclone.clone();
     let APP_PATHclone=APP_PATH.clone();
+    let cargo_channel2 = cargo_channe2.clone();
+    
     ui.on_musicupload(move|name,is_public|{
         let files = FileDialog::new()
         .add_filter("music", &["mp3","mp4","flac","wav","ogg","avi","mov","mkv"])
@@ -473,7 +483,7 @@ async fn Apprun(ui: &AppWindow, musicplayer:MusicPlayer,cargo_worker:CargoWorker
     }
     
 );
-let cargo_channel2 = cargo_channe2.clone();
+
 
     ui.on_refresh(move||{
         let cargo_channel3 = cargo_channel2.clone();
@@ -536,7 +546,7 @@ let cargo_channel2 = cargo_channe2.clone();
     let musicplayerchannel3=musicplayerchannel2.clone();
     let musicplayerchannel6=musicplayerchannel2.clone();
     
-    ui.on_tryplay(move|tryplaydata|{
+    ui.on_tryplay(move|tryplaydata|{  
         let musicplayerchannel3=musicplayerchannel3.clone();
         let url=format!("{}/api/downloapubmusic/{}{}{}",SERVER_URL1,tryplaydata.user,tryplaydata.name,tryplaydata.date);
         println!("{url}");
@@ -566,28 +576,8 @@ let cargo_channel2 = cargo_channe2.clone();
 
 
         let useraccount =FileLib::read_cookie("account").await.unwrap();
-        let jsonstr1=match RequestLib::get(&format!("{}api/getmusiclist/{}/all",SERVER_URL,useraccount)).await{
-            Ok(ok)=>ok,
-            Err(err)=>todo!(),
-        };
-        let musicList: Vec<MusicList> = serde_json::from_str(jsonstr1.as_str()).unwrap();
-        println!("{:?}",musicList);
-        
-        //let mut musiclist1=musicList.clone();
-        let mut musiclist2: Vec<(slint::SharedString, slint::SharedString, bool, slint::SharedString)> = Vec::new();
-        for list in musicList{
-            println!("{:?}",list);
-            musiclist2.push((list.date.clone().into(),list.name.clone().into(),list.public.clone(),list.user.clone().into()));
-            let path=format!("C:/Program Files/P-layer/data/musiclist/{},{},{},{}",<std::string::String as Into<String>>::into(list.user.clone().into()),<std::string::String as Into<String>>::into(list.name.clone().into()),list.date,list.public);
-            FileLib::writefile(path.as_str(), b"").await;
-        };
-        println!("{:?}",musiclist2);
-        // let mut musiclistrc1: ModelRc<(slint::SharedString, bool, slint::SharedString)> =
-        // ModelRc::new(VecModel::from(musiclist2));
 
-        
-        cargo_channel1.send(CargoMessage::SetValue("set_musiclist".to_string(),"1".to_string(),Some(musiclist2))).unwrap();
-
+        update_my_music_list(SERVER_URL,useraccount,cargo_channel1).await;
 
         });
     });
@@ -666,34 +656,34 @@ let cargo_channel2 = cargo_channe2.clone();
     
 
             let account=FileLib::read_cookie("account").await.unwrap();
-            RequestLib::download(&format!("{}api/download",SERVER_URL),&account.as_str(),"avatar.png",&format!("{}dada/user-avatar/avatar.png",APP_PATH)).await;
-            cargo_channel.send(CargoMessage::SetAvatar(format!("{}dada/user-avatar/avatar.png",APP_PATH))).unwrap();
+            RequestLib::download(&format!("{}api/download",SERVER_URL),&account.as_str(),"avatar.png",&format!("{}data/user-avatar/avatar.png",APP_PATH)).await;
+            cargo_channel.send(CargoMessage::SetAvatar(format!("{}data/user-avatar/avatar.png",APP_PATH))).unwrap();
            
         });
     
     });
 
-    ui.on_sign(move|SignData|{
+    ui.on_sign(move|sign_data|{
         let cargo_channel = cargo_channe4.clone();
         
-        let body=format!("{},{},{},{},{},{}", SignData.account.as_str(),SignData.password.as_str(),SignData.name.as_str(),SignData.gender.as_str(),SignData.age.as_str(),SignData.intro.as_str());
+        let body=format!("{},{},{},{},{},{}", sign_data.account.as_str(),sign_data.password.as_str(),sign_data.name.as_str(),sign_data.gender.as_str(),sign_data.age.as_str(),sign_data.intro.as_str());
         //let user_name=SignData.name;
         let SERVER_URL=SERVER_URLclone2.clone();
 
         tokio::spawn(async move {
             RequestLib::post(&format!("{}api/user/create",SERVER_URL),body.as_str()).await;
-            FileLib::creat_cookie("account", SignData.account.as_bytes()).await;
-            FileLib::creat_cookie("password", SignData.password.as_bytes()).await;
-            FileLib::creat_cookie("name", SignData.name.as_bytes()).await;
-            FileLib::creat_cookie("gender", SignData.gender.as_bytes()).await;
-            FileLib::creat_cookie("age", SignData.age.as_bytes()).await;
-            FileLib::creat_cookie("intro", SignData.intro.as_bytes()).await;
-            let avatarpath=SignData.avatarpath.as_str();
-            let account=SignData.account.as_str();
+            FileLib::creat_cookie("account", sign_data.account.as_bytes()).await;
+            FileLib::creat_cookie("password", sign_data.password.as_bytes()).await;
+            FileLib::creat_cookie("name", sign_data.name.as_bytes()).await;
+            FileLib::creat_cookie("gender", sign_data.gender.as_bytes()).await;
+            FileLib::creat_cookie("age", sign_data.age.as_bytes()).await;
+            FileLib::creat_cookie("intro", sign_data.intro.as_bytes()).await;
+            let avatarpath=sign_data.avatarpath.as_str();
+            let account=sign_data.account.as_str();
 
 
             RequestLib::upload(avatarpath.clone(),&format!("{}",SERVER_URL),&account, "avatar.png").await.unwrap();
-            FileLib::copyfile(avatarpath.clone(), "C:/Program Files/P-layer/dada/user-avatar/avatar.png").await.unwrap();
+            FileLib::copyfile(avatarpath.clone(), "C:/Program Files/P-layer/data/user-avatar/avatar.png").await.unwrap();
             
             cargo_channel.send(CargoMessage::SetAvatar(avatarpath.clone().to_string())).unwrap();
             //ui.set_user_avatar(image);
@@ -713,14 +703,11 @@ let cargo_channel2 = cargo_channe2.clone();
         let musicplayerchannel=musicplayerchannel2.clone();
         musicplayerchannel.send(musicplayer::MusicMessage::Pause).unwrap();
     });
-    
-    // ui.on_music_pause(move ||{
-    //     thread::spawn(|| {
-    //         musicpause(sink)
-    //     });
-    // });
+    ui.on_setvolume(move|volume|{
 
-    //移动窗口
+        let musicplayerchannel=musicplayerchannel6.clone();
+        musicplayerchannel.send(musicplayer::MusicMessage::ChangeVolume(volume)).unwrap();
+    });
     ui.on_move_window(move |offset_x, offset_y|{
         let main = handle.upgrade().unwrap();
         //获取窗口的物理坐标
@@ -754,16 +741,19 @@ fn delete_folder_contents(folder_path: &str) -> std::io::Result<()> {
 
     Ok(())
 }
-fn musicplay(path: &str){
+fn musicplay(stream:&[u8]){
     let (_stream, stream_handle) = OutputStream::try_default().unwrap();
-    let file = BufReader::new(File::open(path).unwrap());
+    
+    //let file = BufReader::new(File::open(path).unwrap());
+    let mut file = Cursor::new(stream.to_vec());
+    file.seek(SeekFrom::Start(2)).unwrap();
     let source = Decoder::new(file).unwrap();
     let sink = Sink::try_new(&stream_handle).unwrap();
     sink.append(source);
     sink.sleep_until_end();
 }
 async fn perready(){
-        env::set_var("SERVER_URL", "http://49.232.237.42:8000/");
+    env::set_var("SERVER_URL", "http://127.0.0.1:8000/");
     env::set_var("APP_PATH", "C:/Program Files/P-layer/");
 
     let SERVER_URL = env::var("SERVER_URL").expect("SERVER_URL not found in .env file");
@@ -800,9 +790,46 @@ async fn perready(){
         Ok(ok)=>ok,
         Err(err)=>eprintln!(""),
     };
-    let url=format!("{}api/download",SERVER_URL);
-    RequestLib::download(&url,"2146265126","per.mp3","C:/Program Files/P-layer/data/music/per").await;
-    RequestLib::download(&url,"2146265126","avatar.png","C:/Program Files/P-layer/data/user-avatar/avatar.png").await;
-    RequestLib::download(&url,"2146265126","keypress.mp3","C:/Program Files/P-layer/data/audios/keypress.mp3").await;
-    RequestLib::download(&url,"2146265126","notes.mp3","C:/Program Files/P-layer/data/audios/notes.mp3  ").await;
+    // let url=format!("{}api/download",SERVER_URL);
+    // RequestLib::download(&url,"2146265126","avatar.png","C:/Program Files/P-layer/data/user-avatar/avatar.png").await;
+}
+async fn update_my_music_list(SERVER_URL:String,useraccount:String,cargo_worker:tokio::sync::mpsc::UnboundedSender<CargoMessage>){
+    let jsonstr1=match RequestLib::get(&format!("{}api/getmusiclist/{}/all",SERVER_URL,useraccount)).await{
+        Ok(ok)=>ok,
+        Err(err)=>todo!(),
+    };
+    let musicList: Vec<MusicList> = serde_json::from_str(jsonstr1.as_str()).unwrap();
+    println!("{:?}",musicList);
+    
+    //let mut musiclist1=musicList.clone();
+    let mut musiclist2: Vec<(slint::SharedString, slint::SharedString, bool, slint::SharedString)> = Vec::new();
+    for list in musicList{
+        println!("{:?}",list);
+        musiclist2.push((list.date.clone().into(),list.name.clone().into(),list.public.clone(),list.user.clone().into()));
+        let path=format!("C:/Program Files/P-layer/data/musiclist/{},{},{},{}",<std::string::String as Into<String>>::into(list.user.clone().into()),<std::string::String as Into<String>>::into(list.name.clone().into()),list.date,list.public);
+        FileLib::writefile(path.as_str(), b"").await;
+    };
+    println!("{:?}",musiclist2);
+    
+    cargo_worker.send(CargoMessage::SetValue("set_musiclist".to_string(),"1".to_string(),Some(musiclist2))).unwrap();
+
+
+}
+
+async fn update_pub_music_list(SERVER_URL:String,cargo_worker:tokio::sync::mpsc::UnboundedSender<CargoMessage>){
+
+    let publicjsonstr=RequestLib::get(format!("{}api/getmusiclistall/true",SERVER_URL).as_str()).await.unwrap();
+    //println!("{}",jsonstr);
+    let publicmusiclist: Vec<MusicList> = serde_json::from_str(publicjsonstr.as_str()).unwrap();
+    println!("{:?}",publicmusiclist);
+    let mut publicmusicList: Vec<(slint::SharedString, slint::SharedString, bool, slint::SharedString)> = Vec::new();
+    for list in publicmusiclist{
+        println!("{:?}",list);
+        publicmusicList.push((list.date.clone().into(),list.name.clone().into(),list.public.clone(),list.user.clone().into()));
+        let path=format!("C:/Program Files/P-layer/data/publicmusicList/{},{},{}",<std::string::String as Into<String>>::into(list.user.clone().into()),<std::string::String as Into<String>>::into(list.name.clone().into()),list.date);
+        FileLib::writefile(path.as_str(), b"").await;
+    };
+
+    cargo_worker.send(CargoMessage::SetValue("set_publicmusic".to_string(),"1".to_string(),Some(publicmusicList))).unwrap();
+    
 }

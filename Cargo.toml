@@ -9,7 +9,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.72"
 rodio = "0.17.1"
-slint = "1.1.1"
+slint = "1.2.0"
 tray-item = "*"
 #native-windows-gui = "1.0.12"
 #native-windows-derive = "1.0.3" # Optional. Only if the derive macro is used.

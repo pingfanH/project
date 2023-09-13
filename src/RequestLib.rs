@@ -47,7 +47,7 @@ pub async fn download(url:&str,user:&str,filename:&str,targe:&str){
    let url=format!("{}/{}/{}",url,user,filename);
    let response = reqwest::get(&url).await.expect("Failed to send GET request");
    let content = response.bytes().await.expect("Failed to retrieve response content");
-
+    println!("targe:{}",targe);
    let mut target_file = File::create(targe).expect("Failed to create target file");
    target_file.write_all(&content).expect("Failed to write content to target file");
 }

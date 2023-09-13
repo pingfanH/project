@@ -13,7 +13,7 @@ pub enum MusicMessage {
     Play,
     Pause,
     ChangeMusic(String),
-    ChangeVolume(u32),
+    ChangeVolume(i32),
     TryPlay(Vec<u8>)
 }
 
@@ -24,7 +24,7 @@ pub struct MusicPlayer {
 }
 
 impl MusicPlayer {
-    pub fn new(decoder:Decoder<File>) -> Self {
+    pub fn new(decoder:Decoder<std::io::Cursor<Vec<u8>>>) -> Self {
         let (channel, r) = tokio::sync::mpsc::unbounded_channel();
         let worker_thread = thread::spawn(move || {
             tokio::runtime::Runtime::new().unwrap().block_on(music_player_loop(r,decoder)).unwrap();
@@ -37,7 +37,7 @@ impl MusicPlayer {
     }
 }
 
-async fn music_player_loop(mut r: UnboundedReceiver<MusicMessage>,mut decoder:Decoder<File>) -> Result<(), Box<dyn std::error::Error>> {
+async fn music_player_loop(mut r: UnboundedReceiver<MusicMessage>,decoder:Decoder<std::io::Cursor<Vec<u8>>>) -> Result<(), Box<dyn std::error::Error>> {
     // 创建音频输出流
     let (_stream, stream_handle) = OutputStream::try_default()?;
 
@@ -47,7 +47,7 @@ async fn music_player_loop(mut r: UnboundedReceiver<MusicMessage>,mut decoder:De
 
     let source = Arc::new(decoder); // 使用Arc包装source
     
-    let share_source:Decoder<File> =match Arc::try_unwrap(source){
+    let share_source:Decoder<std::io::Cursor<Vec<u8>>> =match Arc::try_unwrap(source){
         Ok(decoder) => decoder,
         Err(err) => todo!(),
     };
@@ -107,7 +107,10 @@ async fn music_player_loop(mut r: UnboundedReceiver<MusicMessage>,mut decoder:De
             }
             MusicMessage::ChangeVolume(new_volume) => {
                 println!("Changing volume to: {}", new_volume);
-                volume = new_volume;
+                let volume=new_volume as f32;
+
+                println!("Changing volume to: {}", volume/50.0);
+                sink.set_volume(volume/50.0);
             }
             MusicMessage::TryPlay(file)=>{
                 sink.stop();
@@ -116,10 +119,15 @@ async fn music_player_loop(mut r: UnboundedReceiver<MusicMessage>,mut decoder:De
 
                 // 在需要定位的位置调用seek方法
                 file.seek(SeekFrom::Start(2)).unwrap();
-                let source = Decoder::new(file).unwrap();
-                sink.append(source);
-                sink.play();
-                music_playing=true;
+                let source =match Decoder::new(file){
+                    Ok(source) => {
+                        sink.append(source);
+                        sink.play();
+                        music_playing=true;},
+                    Err(_) => eprintln!("error music"),
+                };
+                
+                
             }
         }
     }

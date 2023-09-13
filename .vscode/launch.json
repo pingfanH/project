@@ -24,20 +24,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'project'",
+            "name": "run",
             "cargo": {
                 "args": [
-                    "test",
-                    "--no-run",
-                    "--bin=project",
-                    "--package=project"
+                    "run"
                 ],
                 "filter": {
                     "name": "project",
                     "kind": "bin"
                 }
             },
-            "args": [],
             "cwd": "${workspaceFolder}"
         }
     ]
