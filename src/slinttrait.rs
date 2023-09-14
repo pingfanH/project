@@ -1,31 +1,27 @@
-use std::fs::Metadata;
+use std::{fs::Metadata, path::Path};
 use std::sync::Arc;
 
-use super::{AppWindow};
-
-
+use crate::{AppWindow,env::{self, AVATAR}};
 use futures::future::{Fuse,FutureExt};
-
 use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel, Image, SharedPixelBuffer, Rgba8Pixel};
 use std::rc::Rc;
 use std::str::FromStr;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
 #[derive(Debug)]
-pub enum CargoMessage {
+pub enum SlintMessage {
     Quit,
     SetValue(String,String,Option<Vec<(slint::SharedString, slint::SharedString, bool, slint::SharedString)>>),
-    SetPlaying(bool),
-    SetAvatar(String)
+    Test(String),
 }
 
 #[derive(Debug)]
-pub struct CargoWorker {
-    pub channel: UnboundedSender<CargoMessage>,
+pub struct SlintSender {
+    pub channel: UnboundedSender<SlintMessage>,
     worker_thread: std::thread::JoinHandle<()>,
 }
 
-impl CargoWorker {
+impl SlintSender {
     pub fn new(cargo_ui: &AppWindow) -> Self {
         let (channel, r) = tokio::sync::mpsc::unbounded_channel();
         let worker_thread = std::thread::spawn({
@@ -44,29 +40,23 @@ impl CargoWorker {
     }
 
     // pub fn join(self) -> std::thread::Result<()> {
-    //     let _ = self.channel.send(CargoMessage::Quit);
+    //     let _ = self.channel.send(SlintMessage::Quit);
     //     self.worker_thread.join()
     // }
 }
 
 async fn cargo_worker_loop(
-    mut r: UnboundedReceiver<CargoMessage>,
+    mut r: UnboundedReceiver<SlintMessage>,
     handle: slint::Weak<AppWindow>,
 ) -> tokio::io::Result<()> {
     let trait_set = Fuse::terminated();
-    let trait_set1 = Fuse::terminated();
 
     futures::pin_mut!(
         trait_set,
-        trait_set1,
     );
     loop {
-        let m: CargoMessage = futures::select! {
+        let m: SlintMessage = futures::select! {
             res = trait_set => {
-                res;
-                continue;
-            }
-            res = trait_set1 => {
                 res;
                 continue;
             }
@@ -79,22 +69,11 @@ async fn cargo_worker_loop(
         };
 
         match m {
-            CargoMessage::Quit => return Ok(()),
-            CargoMessage::SetValue(function,Value,List) => {
-                trait_set.set(set_value(handle.clone(),function,Value,List).fuse());
-            },
-            CargoMessage::SetPlaying(Value) => {
-                //trait_set1.set(set_playing(handle.clone(),Value).fuse())
-            },
-            CargoMessage::SetAvatar(avatarpath) => {
-                trait_set1.set(set_avatar(handle.clone(),avatarpath).fuse());
-            }
-    }
-}
-fn parse_string_to_bool(string: &str) -> Option<bool> {
-    match bool::from_str(string) {
-        Ok(value) => Some(value),
-        Err(_) => None,
+            SlintMessage::Quit => return Ok(()),
+            SlintMessage::SetValue(function,Value,List) =>
+            trait_set.set(set_value(handle.clone(),function,Value,List).fuse()),
+            SlintMessage::Test(string)=>
+            {set_playing(handle.clone(),string).fuse().await;return Ok(())},
     }
 }
 }
@@ -148,6 +127,24 @@ async fn set_value(handle: slint::Weak<AppWindow>,function:String,value:String,l
                          ModelRc::new(VecModel::from(list));
                      h.set_publicmusic(musiclistrc1);
                  },
+                 "set_avatar"=>{
+                    let image = match Image::load_from_path(Path::new(&value)){
+                        Ok(image) => image,
+                        Err(_) =>{
+                            let mut cat_image = image::load_from_memory(AVATAR).expect("err").into_rgba8();
+                            image::imageops::colorops::brighten_in_place(&mut cat_image, 20);
+                        
+                            let buffer = SharedPixelBuffer::<Rgba8Pixel>::clone_from_slice(
+                                cat_image.as_raw(),
+                                cat_image.width(),
+                                cat_image.height(),
+                            );
+                            Image::from_rgba8(buffer)
+                        },
+                    };
+                    h.set_user_avatar(image);
+                    
+                 },
                 &_ => todo!(),
             }
             // let code =format!("h.{}(SharedString::from({}))",function, value);
@@ -156,11 +153,12 @@ async fn set_value(handle: slint::Weak<AppWindow>,function:String,value:String,l
         })
         .unwrap();
 }
-async fn set_playing(handle: slint::Weak<AppWindow>,value:bool){
+async fn set_playing(handle: slint::Weak<AppWindow>,value:String){
     handle
         .clone()
         .upgrade_in_event_loop(move |h| {
-            h.set_is_playing(value);
+           println!("{}",value);
+           h.set_user_name(SharedString::from(value));
         })
         .unwrap();
 }

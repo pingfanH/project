@@ -106,27 +106,22 @@ async fn music_player_loop(mut r: UnboundedReceiver<MusicMessage>,decoder:Decode
                 }
             }
             MusicMessage::ChangeVolume(new_volume) => {
-                println!("Changing volume to: {}", new_volume);
                 let volume=new_volume as f32;
 
                 println!("Changing volume to: {}", volume/50.0);
                 sink.set_volume(volume/50.0);
             }
             MusicMessage::TryPlay(file)=>{
-                sink.stop();
-                sink.pause();
+                let sink = Sink::try_new(&stream_handle)?;
                 let mut file = Cursor::new(file);
 
                 // 在需要定位的位置调用seek方法
                 file.seek(SeekFrom::Start(2)).unwrap();
-                let source =match Decoder::new(file){
-                    Ok(source) => {
-                        sink.append(source);
-                        sink.play();
-                        music_playing=true;},
-                    Err(_) => eprintln!("error music"),
-                };
-                
+                let source=Decoder::new(file)?;
+                sink.append(source);
+                sink.play();
+                thread::sleep(Duration::from_secs(10));
+                sink.stop();
                 
             }
         }
@@ -135,10 +130,3 @@ async fn music_player_loop(mut r: UnboundedReceiver<MusicMessage>,decoder:Decode
     Ok(())
 }
 
-// async fn playstreammusic(file:Vec<u8>){
-//     let (_stream, stream_handle) = OutputStream::try_default().unwrap();
-    
-//     let sink = Sink::try_new(&stream_handle).unwrap();
-//     sink.append(source);
-//     sink.sleep_until_end();
-// }

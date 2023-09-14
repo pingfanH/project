@@ -42,7 +42,7 @@ pub async fn upload(path:&str,url:&str,user:&str,name:&str)->Result<(), Box<dyn 
     //println!("{:?}",response);
     Ok(())
 }
-pub async fn download(url:&str,user:&str,filename:&str,targe:&str){
+pub async fn download(url:&str,user:&str,filename:&str,targe:&str)->String{
     // 创建目标文件并写入内容
    let url=format!("{}/{}/{}",url,user,filename);
    let response = reqwest::get(&url).await.expect("Failed to send GET request");
@@ -50,6 +50,7 @@ pub async fn download(url:&str,user:&str,filename:&str,targe:&str){
     println!("targe:{}",targe);
    let mut target_file = File::create(targe).expect("Failed to create target file");
    target_file.write_all(&content).expect("Failed to write content to target file");
+   "success".to_owned()
 }
 
 pub async fn get_file(url: &str) -> Result<Vec<u8>, Error> {

@@ -1,5 +1,9 @@
-use serde_json::json;
+use std::fs;
+
+use serde_json::{json, Value};
 use regex::Regex;
+
+use crate::env::{self, APP_PATH};
 pub fn str2json(str:&str)->serde_json::Value {
     
     // 解析输入字符串
@@ -26,3 +30,45 @@ pub fn str2json(str:&str)->serde_json::Value {
     json_obj
 }
 
+pub async fn perready(){
+    let datalist=json!([
+        "",
+        "cookies",
+        ["data",["audios","music","musiclist","publicmusiclist","user-avatar"]]
+    ]);
+    println!("{:#?}",datalist);
+        let datalist=datalist.as_array().unwrap();
+        for i in datalist{
+            match i {
+                Value::String(s)=>
+                match fs::create_dir(
+                    format!(
+                        "{}{}",
+                        APP_PATH,
+                        s
+                    )
+                ){Ok(ok)=>println!("ok"),Err(err)=>eprintln!("{}",err)},
+                Value::Array(a) => {
+                    match fs::create_dir(
+                        format!(
+                            "{}{}",
+                            APP_PATH,
+                            a[0].to_string().replace('"',"")
+                        )
+                    ){Ok(ok)=>println!("ok"),Err(err)=>eprintln!("{}",err)}
+                    for i in a[1].as_array().unwrap(){
+                        match fs::create_dir(
+                            &format!(
+                                "{}{}/{}",
+                                APP_PATH.to_owned(),
+                                a[0].to_string().replace('"',""),
+                                i.to_string().replace('"',"")
+                            )
+                        ){Ok(ok)=>println!("ok"),Err(err)=>eprintln!("{}",err)}
+                    }
+                },
+                _=>eprintln!("err"),
+
+             }
+        };
+}

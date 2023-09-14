@@ -6,6 +6,8 @@ use std::io::Write;
 use std::io::prelude::*;
 use std::fs;
 use std::path::Path;
+
+use serde_json::Value;
 pub async fn writefile(path: &str, data: &[u8]) -> std::io::Result<()> {
     let mut file = File::create(path)?;
     match readfile(path).await{
@@ -114,18 +116,16 @@ pub async fn readfilenameloop(path:&str)->Vec<serde_json::Value>{
 jsonlist
 }
 
-pub async fn selectfromjson(jsonlist:Vec<serde_json::Value>,select:&str,value:&str)->serde_json::Value{
+//循环一个vec<Value>,当select和value的值在json中能对照时返回这些json:vec<Value>
+async fn selectfromjson(jsonlist:Vec<serde_json::Value>,select:&str,value:&str)->Vec<serde_json::Value>{
 
-    //let mut selectedjson:serde_json::Value;
+    let mut selectedjson:Vec<Value>= vec![];
     for i in jsonlist{
-
             if i[select]==value{
-                return i;
+                selectedjson.push(i);
             }
-        
-        
-    }.into()
-    
+    };
+    selectedjson
 }
 pub fn str2bool(s: &str) -> Option<bool> {
     match s.to_lowercase().as_str() {
