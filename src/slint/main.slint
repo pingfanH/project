@@ -8,11 +8,13 @@ import { SideBar } from "SideBar.slint";
 import { SettingValue,UserSetting } from "user.slint";
 import { Login,SignData } from "Login.slint";
 import { musiclistdata } from "list.slint";
+import { CardList } from "card.slint";
 export struct UserSettingData {
     name:string,
     gender:string,
     intro:string,
-    age:string
+    age:string,
+    avatar-path:string
 }
 //import { BorderlessWindow } from "borderless-window.slint";
 import {
@@ -191,7 +193,6 @@ export component search{
 export global values {
     in-out property <bool> pane-visible:true;
     in-out property <bool> is-playing: false;
-    in-out property <string> url:"https://space.bilibili.com/485727024?spm_id_from=333.1007.0.0";
 
     property <bool> drag-area-pressed: false;
     // 记录按下的位置
@@ -212,7 +213,6 @@ export component AppWindow inherits Window {
     
     in-out property <bool> pane-visible:true;
     in-out property <bool> is-playing: false;
-    in-out property <string> url <=> values.url;
     no-frame: true;
     property <bool> drag-area-pressed: false;
     // 记录按下的位置
@@ -238,6 +238,7 @@ export component AppWindow inherits Window {
     callback collect(musiclistdata);
     callback refresh();
     callback setvolume(int);
+    callback cancel-tryplay();
 
     in-out property <string> user_name:"用户114514";
     in-out property <string> user_intro:"未登录";
@@ -245,6 +246,7 @@ export component AppWindow inherits Window {
     in-out property <string> user_age:"未登录";
     in-out property <string> user-sign-date;
     in-out property <string> user-id;
+    in-out property <string> user-avatar-path;
     in-out property <int> user_music_number:0;
     in-out property <bool> is-setting<=>SettingValue.is-setting;
     in-out property <bool> is-login:false;
@@ -253,7 +255,7 @@ export component AppWindow inherits Window {
 
     in-out property <[{user:string,name:string,date:string,public:bool}]> musiclist;
     in-out property <[{user:string,name:string,date:string,public:bool}]> publicmusic;
-
+    in-out property <[{cards:[CardList]}]> cards;
     in-out property <string>avatar-path;
 
     in-out property <string> account;
@@ -335,15 +337,17 @@ export component AppWindow inherits Window {
             
             test => {root.test("123")}
             width: 500px;
-            open-url=>{root.open_the_url(url)}
+            open-url=>{root.open_the_url(self.url)}
         
         }
         if(side-bar.current-item == 1) : MusicLib {
             width: 500px;
             upload => {root.musicupload(self.music-name,self.is-public)}
             tryplay => {root.tryplay(self.othermusicdata)}
+            cancel-tryplay => {root.cancel-tryplay()}
             collect => {root.collect(self.othermusicdata)}
             publicmusic<=>root.publicmusic;
+            cards<=>root.cards;
             refresh=>{root.refresh();}
         }
         if(side-bar.current-item == 2) : user-main {
@@ -361,8 +365,11 @@ export component AppWindow inherits Window {
                 name:self.setting-user-name,
                 gender:self.setting-user-gender,
                 age:self.setting-user-age,
-                intro:self.setting-user-intro
+                intro:self.setting-user-intro,
+                avatar-path:self.avatar-path
             });}
+            set-avatar => {root.choose-avatar()}
+            avatar-path:root.avatar-path;
             user-avatar:root.user-avatar;
         }
         if(side-bar.current-item == 3) : setting {width: 500px;}
@@ -379,7 +386,6 @@ export component AppWindow inherits Window {
         
     }
     animated := Rectangle {
-        //background: #0000002c;
         property <length> width-:400px;
         property <length> height-:10px;
         width: 100%;
@@ -406,9 +412,6 @@ export component AppWindow inherits Window {
             height: height-;
             choose-music=>{root.choose-music(self.music-choosed);values.is-playing=true;root.is-playing=true}
             close=>{show-list=false;click-audio()}
-            // visible: root.show-list&&root.is-login;
-            //back => { root.show-list = false;click_audio1()}
-            //is-playing<=>root.is-playing;
             background: #000000;
             musiclist:root.musiclist;
         }
@@ -498,113 +501,4 @@ export component AppWindow inherits Window {
             setvolume => {root.setvolume(self.volume)}
         }
     }
-    // TabWidget {
-        //     // hide the widgets from the tab focus handler when covered:
-        //     visible: pane-visible;
-        //     width: parent.width;
-        //     y:30px;
-        //     Tab {
-        //         title: "主页";
-        //         homepage{}
-        //     }
-
-        //     Tab {
-        //         title: "音乐库";
-
-        //     }
-
-        //     Tab {
-        //         title: "我的";
-        //         user-main{
-                    
-        //         }
-        //     }
-
-        //     Tab {
-        //         title: "设置";
-        //         setting{
-        //             // preferred-width: parent.width;
-        //             // preferred-height: parent.height;
-        //         }
-        //     }
-        // }
-
-
-
-    // Rectangle {
-    //     background: @linear-gradient(125deg,#130c27 90%, #0f0c16 100%, #1c123a 100%,#1f1441 100%, #180446 100%);
-    // }
-    // list{
-    //     x:100px;
-    //     y: parent.height/2.3;
-    // }
-    // Image {
-    //     CloseArea := TouchArea {}
-    //     source: @image-url("../assets/icon/xmark.svg");
-    //     width: 25px;
-    //     y: 20px;
-    //     x: parent.width -60px;
-        
-    //    //colorize: CloseArea.has-hover ? #000000 : #dfdbdb;
-    //    colorize: #dfdbdb;
-
-
-    //     animate colorize {
-
-    //         duration: 100ms;
-    //     }
-        
-        
-    // }
-    // Image {
-    //     SettingArea := TouchArea {clicked => { popup.show(); }}
-    //     source: @image-url("../assets/icon/setting.svg");
-    //     width: 25px;
-    //     y: 22px;
-    //     x: parent.width -120px;
-    //     //colorize: SettingArea.has-hover ? #cf2727 : #ffffff;
-    //     colorize: #dfdbdb;
-    //     animate colorize {
-    //         duration: 100ms;
-    //     }
-        
-
-    // }
-    
-    // popup := PopupWindow {
-    //     x: 100px;
-    //     y: parent.height/8;
-    //     height: parent.height;
-    //     width: parent.width/2;
-    //     Rectangle {
-    //         height:100%; 
-    //         width: 100%; 
-    //         background: #ff0000; 
-    //     }
-    // }
-    // Image {
-    //     UserArea := TouchArea {}
-    //     source: @image-url("../assets/icon/user.svg");
-    //     width: 25px;
-    //     y: 22px;
-    //     x: parent.width -180px;
-    //     //colorize: UserArea.has-hover ? #cf2727 : #ffffff;
-        
-    //     colorize: #dfdbdb;
-    //     animate colorize {
-    //         duration: 100ms;
-    //     }
-
-    // }
-    // search{
-    //     y: 17px;
-    //     width: parent.width/5;
-    //     height: 44px;
-    // }
-    // player{
-    //     y: parent.height -100px;
-    //     width: parent.width -15px;
-    //     height: 90px;
-    // }
-
 }

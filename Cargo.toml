@@ -31,6 +31,6 @@ image="*"
 [target.'cfg(windows)'.build-dependencies]
 dotenv = "0.15"
 windres = "*"
-slint-build = "1.1.1"
+slint-build = "1.2.2"
 [build]
 run = "dotenv::dotenv().ok();"

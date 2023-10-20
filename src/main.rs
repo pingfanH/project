@@ -15,15 +15,13 @@ mod ultis;
 mod tray_item;
 mod env;
 mod ui;
+mod structs;
 slint::include_modules!();
 #[tokio::main]
 async fn main() {
     json::perready().await;
     let ui: AppWindow= AppWindow::new().unwrap();
-    let mut persound = Cursor::new(env::PERSOUND.to_vec());
-    persound.seek(SeekFrom::Start(2)).unwrap();
-    let decoder = Decoder::new(persound).unwrap();
-    let musicplayer=Arc::new(musicplayer::MusicPlayer::new(decoder));
+    let musicplayer=Arc::new(musicplayer::MusicPlayer::new());
 
     let slintsender=Arc::new(slinttrait::SlintSender::new(&ui));
 

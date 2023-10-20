@@ -8,6 +8,8 @@ use std::fs;
 use std::path::Path;
 
 use serde_json::Value;
+use crate::structs::MusicList;
+
 pub async fn writefile(path: &str, data: &[u8]) -> std::io::Result<()> {
     let mut file = File::create(path)?;
     match readfile(path).await{
@@ -72,8 +74,8 @@ pub async fn read_cookie(name:&str)-> Result<String, String>{
     }
 }
 
-pub async fn readfilenameloop(path:&str)->Vec<serde_json::Value>{
-    let mut jsonlist:Vec<serde_json::Value>=vec![];
+pub async fn readfilenameloop(path:&str)->Vec<MusicList>{
+    let mut jsonlist:Vec<MusicList>=vec![];
     let folder_path = Path::new(path);
     let mut lists:Vec<String>=vec![];
     // 检查文件夹是否存在
@@ -101,19 +103,12 @@ pub async fn readfilenameloop(path:&str)->Vec<serde_json::Value>{
 
     for list in lists {
         println!("list:{}",list);
-        let list:Vec<_>=list.split(",").collect();
-        let jsonl=serde_json::json!({
-                "user":list[0],
-                "name":list[1],
-                "date":list[2],
-                "public":str2bool(list[3]),
-                
-        
-        });
-        jsonlist.push(jsonl);
+        let list:Vec<&str>=list.split(",").collect();
+        let musicdata:MusicList=MusicList { user: list[0].to_owned(), name: list[1].to_owned(), date: list[2].to_owned(), public: str2bool(list[3]).unwrap() };
+        jsonlist.push(musicdata);
 
-};
-jsonlist
+    };
+    jsonlist
 }
 
 //循环一个vec<Value>,当select和value的值在json中能对照时返回这些json:vec<Value>

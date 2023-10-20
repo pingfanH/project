@@ -11,23 +11,20 @@ export struct UserSettingData {
     name:string,
     gender:string,
     intro:string,
-    age:string
+    age:string,
+    avatar-path:string
 }
 
 export component UserSetting inherits Pane{
     in-out property <bool> is-setting<=>SettingValue.is-setting;
     callback back<=> back_btn.clicked;
-    //callback apply<=>SettingValue.apply;
-    in-out property <string>setting-user-age;//:SettingValue.user-age;
-    //in-out property <int>setting-user-age-pos:50 ;
-    //in-out property <length>setting-user-age-text-pos<=>setting-user-age;
-    in-out property <string> setting-user-name;//:SettingValue.user-name;
-    //in-out property <string> changed-user-name<=>Uservalues.user-name;
-    in-out property <string> setting-user-gender;//:SettingValue.user-gender;
-    in-out property <string> setting-user-intro;//:SettingValue.user-intro;
+
+    in-out property <string>setting-user-age;
+    in-out property <string> setting-user-name;
+    in-out property <string> setting-user-gender;
+    in-out property <string> setting-user-intro;
+
     property <bool>is-selecting-gender:false;
-
-
             Text {
                 x:30px;
                 y:40px;
@@ -144,28 +141,35 @@ export component UserSetting inherits Pane{
                 edited=>{root.setting-user-intro=self.text}
                 text:root.setting-user-intro;
             }
+
+            LineEdit {
+                visible:!root.is-selecting-gender;
+                x:90px;
+                y:275px;
+                font-size: 20px;
+                width: parent.width/2;
+                
+                height: 30px;
+                placeholder-text: "头像路径";
+                edited=>{root.setting-user-intro=self.text}
+                text:root.setting-user-intro;
+            }
             Button {
                 x:90px;
-                y:270px;
+                y:320px;
                 width: 90px;
                 height: 50px;
                 text: "确定";
-                clicked => {SettingValue.is-setting=false;
-                    //changed-user-name=root.setting-user-name;
+                clicked => {
+                    SettingValue.is-setting=false;
                     Uservalues.user-age=root.setting-user-age;
                     Uservalues.user-gender=root.setting-user-gender;
                     Uservalues.user-intro=root.setting-user-intro;
-                    // root.apply({
-                    //     name:root.setting-user-name,
-                    //     age:root.setting-user-age,
-                    //     gender:root.setting-user-gender,
-                    //     intro:root.setting-user-intro,
-                    // });
                 }
             }
             Button {
                 x:290px;
-                y:270px;
+                y:320px;
                 width: 90px;
                 height: 50px;
                 text: "关闭";
@@ -186,8 +190,6 @@ export component UserSetting inherits Pane{
     }
 export global SettingValue {
     in-out property <bool> is-setting;
-
-    //callback apply(UserSettingData);
 }
 export global Uservalues {
     in-out property <string> user-name:"用户114514";
@@ -204,13 +206,13 @@ export component user-main{
     in-out property <string> user-gender;
     in-out property <string> user-age;
     in-out property <string> user-sign-date;
-
+    in-out property <string> avatar-path;
 
     in-out property <int> user-music-number:0;
     in-out property <bool> is-setting<=>SettingValue.is-setting;
     callback click_audio();
     callback click_audio1();
-
+    callback set-avatar();
     callback back;
     in-out property <string>setting-user-age:user-age;
     in-out property <string> setting-user-name:user-name;
@@ -411,19 +413,6 @@ export component user-main{
                                 }
                             }
                         }
-        
-                        
-                        // StandardListView {
-        
-                        //     visible: root.is-selecting-gender;
-                        //     width:parent.width;
-                        //     height: parent.height;
-                        //     model: [ { text: "Blue"}, { text: "Red" }, { text: "Green" },
-                        //         { text: "Yellow" }, { text: "Black"}, { text: "White"},
-                        //         { text: "Magenta" }, { text: "Cyan" },
-                        //     ];
-                            
-                        // }
                     }
                     Text {
                         x:32px;
@@ -445,7 +434,7 @@ export component user-main{
                     }
                     Button {
                         x:90px;
-                        y:270px;
+                        y:320px;
                         width: 90px;
                         height: 50px;
                         text: "确定";
@@ -465,7 +454,7 @@ export component user-main{
                     }
                     Button {
                         x:290px;
-                        y:270px;
+                        y:320px;
                         width: 90px;
                         height: 50px;
                         text: "取消";
@@ -477,7 +466,23 @@ export component user-main{
                             click_audio1();
                         }
                     }
-        
+                    Button {
+                        text: "📁";
+                        x:32px;
+                        y:275px;
+                        clicked => {root.set-avatar()}
+                    }
+                    LineEdit {
+                        visible:!root.is-selecting-gender;
+                        x:90px;
+                        y:275px;
+                        font-size: 20px;
+                        width: parent.width/2;
+                        height: 30px;
+                        placeholder-text: "头像路径";
+                        edited=>{root.avatar-path=self.text}
+                        text:root.avatar-path;
+                    }
         
         
                 

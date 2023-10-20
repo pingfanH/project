@@ -22,8 +22,8 @@ pub fn main(ui:&AppWindow,musicplayer:Arc<MusicPlayer>){
         let date=musiclistdata.date;
 
         println!("music:{}",name);
-        let music=format!("{}data/music/{}{}{}",APP_PATH,user,name,date);
-        musicplayer3.channel.send(musicplayer::MusicMessage::ChangeMusic(music)).unwrap();
+        let music=format!("{}{}{}",user,name,date);
+        musicplayer3.channel.send(musicplayer::MusicMessage::ChangeMusic(music.into())).unwrap();
     });
     let musicplayer4=musicplayer.clone();
     ui.on_tryplay(move|tryplaydata|{  
@@ -41,6 +41,9 @@ pub fn main(ui:&AppWindow,musicplayer:Arc<MusicPlayer>){
     ui.on_setvolume(move|volume|{
         musicplayer5.channel.send(musicplayer::MusicMessage::ChangeVolume(volume)).unwrap();
     });
-
+    let musicplayer6=musicplayer.clone();
+    ui.on_cancel_tryplay(move||{
+        musicplayer6.channel.send(musicplayer::MusicMessage::CancelTryPlayer()).unwrap();
+    });
 
 }

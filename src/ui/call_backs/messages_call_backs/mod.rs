@@ -1,9 +1,10 @@
 use rfd::FileDialog;
 use serde_json::json;
 
-use crate::{AppWindow, request_lib,file_lib, ui::MusicList, slinttrait::{SlintMessage, SlintSender}};
-use std::{sync::Arc, collections::HashMap};
+use crate::{AppWindow, request_lib,file_lib, structs::MusicList, slinttrait::{SlintMessage, SlintSender}};
+use std::{sync::Arc, collections::HashMap, fs::File};
 use crate::env::{APP_PATH, SERVER_URL};
+use crate::CardList;
 pub fn main(ui:&AppWindow,slint_sender:Arc<SlintSender>){
 let slintsendrclone=slint_sender.clone();
 //上传音乐
@@ -79,7 +80,7 @@ ui.on_musicupload(move|name,is_public|{
         // ModelRc::new(VecModel::from(musiclist2));
 
         
-        slint_sender_channel.send(SlintMessage::SetValue("set_musiclist".to_string(),"1".to_string(),Some(musiclist2))).unwrap();
+        slint_sender_channel.send(SlintMessage::SetList("set_musiclist".to_string(),musiclist2)).unwrap();
     
     
 
@@ -95,7 +96,7 @@ ui.on_musicupload(move|name,is_public|{
             file_lib::writefile(path.as_str(), b"").await;
         };
 
-        slint_sender_channel.send(SlintMessage::SetValue("set_publicmusic".to_string(),"1".to_string(),Some(publicmusicList))).unwrap();
+        slint_sender_channel.send(SlintMessage::SetList("set_publicmusic".to_string(),publicmusicList)).unwrap();
         //println!("musiclistrc{:#?}",musiclistrc);
     //ui.set_publicmusic(pubmusiclistrc);
 
@@ -121,8 +122,16 @@ ui.on_choose_avatar(move||{
 if let Some(files ) = files{
         let path=files.display().to_string();
         println!("{}",path);
-        slint_sender_channel.send(SlintMessage::SetValue("set_avatar_path".to_string(),path,None)).unwrap();
+        let path1=path.clone();
+        tokio::spawn(async move{
+            let account=file_lib::read_cookie("account").await.unwrap();
+            request_lib::upload(&path1,&format!("{}api/upload",SERVER_URL),&account, "avatar.png").await;
+
+            file_lib::copyfile(path1.as_str(), &format!("{}data/user-avatar/avatar.png",APP_PATH)).await;
+        });
+        slint_sender_channel.send(SlintMessage::SetAvatar(path)).unwrap();
     };
+
 });
 //刷新列表
 let slintsendrclone=slint_sender.clone();
@@ -140,9 +149,10 @@ ui.on_refresh(move||{
         file_lib::writefile(path.as_str(), b"").await;
     };
 
-    slint_sender_channel.send(SlintMessage::SetValue("set_publicmusic".to_string(),"1".to_string(),Some(publicmusic_list))).unwrap();
+    slint_sender_channel.send(SlintMessage::SetList("set_publicmusic".to_string(),publicmusic_list)).unwrap();
     });
 });
+//收藏音乐
 let slintsendrclone=slint_sender.clone();
 ui.on_collect(move|collectdata|{
     let url=format!("{}/api/downloapubmusic",SERVER_URL);
@@ -163,8 +173,10 @@ ui.on_collect(move|collectdata|{
 
     });
 });
+//应用个人信息更改
 ui.on_apply(move |updated_user_data|{
     tokio::spawn(async move {
+
         let token=match file_lib::readfile(&format!("{}cookies/.token",APP_PATH)).await{
             Ok(ok)=>{
                 ok
@@ -177,7 +189,7 @@ ui.on_apply(move |updated_user_data|{
         user_data.insert("user_age", updated_user_data.age.as_str());
         user_data.insert("user_intro", &updated_user_data.intro.as_str());
         user_data.insert("user_gender", &updated_user_data.gender.as_str());
-    
+        
         let user_data = vec![json!(user_data)];
         let body = serde_json::to_string(&user_data).unwrap();
         println!("apply {:#?}", body);
@@ -191,10 +203,16 @@ ui.on_apply(move |updated_user_data|{
         file_lib::creat_cookie("age", age.as_bytes()).await;
         file_lib::creat_cookie("intro", intro.as_bytes()).await;
         file_lib::creat_cookie("gender", gender.as_bytes()).await;
+
         request_lib::post(&format!("{}api/user/update",SERVER_URL), body.as_str()).await;
+        
+
+
+        
     });
 });
 let slintsendrclone=slint_sender.clone();
+//登录
 ui.on_login( move|account,password|{
     let slint_sender_channel = slintsendrclone.channel.clone();
     tokio::spawn(async move {
@@ -208,13 +226,13 @@ ui.on_login( move|account,password|{
 
         let user_data=crate::json::str2json(user_data.as_str());
         
-        slint_sender_channel.send(SlintMessage::SetValue("set_user_name".to_string(),user_data["user_name"].to_string().replace('"',""),None)).unwrap();
-        slint_sender_channel.send(SlintMessage::SetValue("set_user_age".to_string(),user_data["user_age"].to_string().replace('"',""),None)).unwrap();
-        slint_sender_channel.send(SlintMessage::SetValue("set_user_id".to_string(),user_data["user_id"].to_string().replace('"',""),None)).unwrap();
-        slint_sender_channel.send(SlintMessage::SetValue("set_user_gender".to_string(),user_data["user_gender"].to_string().replace('"',""),None)).unwrap();
-        slint_sender_channel.send(SlintMessage::SetValue("set_user_intro".to_string(),user_data["user_intro"].to_string().replace('"',""),None)).unwrap();
-        slint_sender_channel.send(SlintMessage::SetValue("set_user_music_number".to_string(),user_data["user_music_number"].to_string().replace('"',""),None)).unwrap();
-        slint_sender_channel.send(SlintMessage::SetValue("set_user_sign_date".to_string(),user_data["user_sign_date"].to_string().replace('"',""),None)).unwrap();
+        slint_sender_channel.send(SlintMessage::SetValue("set_user_name".to_string(),user_data["user_name"].to_string().replace('"',""))).unwrap();
+        slint_sender_channel.send(SlintMessage::SetValue("set_user_age".to_string(),user_data["user_age"].to_string().replace('"',""))).unwrap();
+        slint_sender_channel.send(SlintMessage::SetValue("set_user_id".to_string(),user_data["user_id"].to_string().replace('"',""))).unwrap();
+        slint_sender_channel.send(SlintMessage::SetValue("set_user_gender".to_string(),user_data["user_gender"].to_string().replace('"',""))).unwrap();
+        slint_sender_channel.send(SlintMessage::SetValue("set_user_intro".to_string(),user_data["user_intro"].to_string().replace('"',""))).unwrap();
+        slint_sender_channel.send(SlintMessage::SetValue("set_user_music_number".to_string(),user_data["user_music_number"].to_string().replace('"',""))).unwrap();
+        slint_sender_channel.send(SlintMessage::SetValue("set_user_sign_date".to_string(),user_data["user_sign_date"].to_string().replace('"',""))).unwrap();
         
         //let mut name = Arc::new(user_data["user_name"].to_string().clone());
         file_lib::creat_cookie("token", user_data["user_token"].to_string().replace('"',"").as_bytes()).await;
@@ -231,7 +249,7 @@ ui.on_login( move|account,password|{
 
         let account=file_lib::read_cookie("account").await.unwrap();
         request_lib::download(&format!("{}api/download",SERVER_URL),&account.as_str(),"avatar.png",&format!("{}data/user-avatar/avatar.png",APP_PATH)).await;
-        slint_sender_channel.send(SlintMessage::SetValue("set_avatar".to_string(),format!("{}data/user-avatar/avatar.png",APP_PATH).clone().to_owned(),None)).unwrap();
+        slint_sender_channel.send(SlintMessage::SetValue("set_avatar".to_string(),format!("{}data/user-avatar/avatar.png",APP_PATH).clone().to_owned())).unwrap();
         
 
 
@@ -240,6 +258,7 @@ ui.on_login( move|account,password|{
     });
 
 });
+//注册
 let slintsendrclone=slint_sender.clone();
 ui.on_sign(move|sign_data|{
     let slint_sender_channel = slintsendrclone.channel.clone();
@@ -262,13 +281,11 @@ ui.on_sign(move|sign_data|{
         request_lib::upload(avatarpath.clone(),&format!("{}",SERVER_URL),&account, "avatar.png").await.unwrap();
         file_lib::copyfile(avatarpath.clone(), &format!("{}data/user-avatar/avatar.png",APP_PATH)).await.unwrap();
         
-        slint_sender_channel.send(SlintMessage::SetValue("set_avatar".to_string(),avatarpath.clone().to_owned(),None)).unwrap();
+        slint_sender_channel.send(SlintMessage::SetValue("set_avatar".to_string(),avatarpath.clone().to_owned())).unwrap();
 
     });
    
 });
-
-
 }
 
 pub async fn update_my_music_list(server_url:String,useraccount:String,cargo_worker:tokio::sync::mpsc::UnboundedSender<SlintMessage>){
@@ -276,8 +293,11 @@ pub async fn update_my_music_list(server_url:String,useraccount:String,cargo_wor
         Ok(ok)=>ok,
         Err(err)=>todo!(),
     };
-    let music_list: Vec<MusicList> = serde_json::from_str(jsonstr1.as_str()).unwrap();
-    println!("{:?}",music_list);
+    let music_list: Vec<MusicList> = match serde_json::from_str(jsonstr1.as_str()){
+        Ok(music_list) => {println!("{:?}",music_list);music_list},
+        Err(err) => {eprintln!("{}",err);vec![]},
+    };
+    
     
     //let mut musiclist1=musicList.clone();
     let mut musiclist2: Vec<(slint::SharedString, slint::SharedString, bool, slint::SharedString)> = Vec::new();
@@ -289,7 +309,7 @@ pub async fn update_my_music_list(server_url:String,useraccount:String,cargo_wor
     };
     println!("{:?}",musiclist2);
     
-    cargo_worker.send(SlintMessage::SetValue("set_musiclist".to_string(),"1".to_string(),Some(musiclist2))).unwrap();
+    cargo_worker.send(SlintMessage::SetList("set_musiclist".to_string(),musiclist2)).unwrap();
 
 
 }
@@ -300,17 +320,27 @@ pub async fn update_pub_music_list(
 )
 {
     let publicjsonstr=request_lib::get(format!("{}api/getmusiclistall/true",server_url).as_str()).await.unwrap();
-    let publicmusiclist: Vec<MusicList> = serde_json::from_str(publicjsonstr.as_str()).unwrap();
-    println!("{:?}",publicmusiclist);
-    let mut publicmusic_list: Vec<(slint::SharedString, slint::SharedString, bool, slint::SharedString)> = Vec::new();
-    for list in publicmusiclist{
-        println!("{:?}",list);
-        publicmusic_list.push((list.date.clone().into(),list.name.clone().into(),list.public.clone(),list.user.clone().into()));
-        let path=format!("{}data/publicmusicList/{},{},{}",APP_PATH,<std::string::String as Into<String>>::into(list.user.clone().into()),<std::string::String as Into<String>>::into(list.name.clone().into()),list.date);
-        file_lib::writefile(path.as_str(), b"").await.unwrap();
-    };
 
-    cargo_worker.send(SlintMessage::SetValue("set_publicmusic".to_string(),"1".to_string(),Some(publicmusic_list))).unwrap();
-    
+    let publicmusiclist: Vec<MusicList> = match serde_json::from_str(publicjsonstr.as_str()){
+        Ok(music_list) => {println!("{:?}",music_list);music_list},
+        Err(err) => {eprintln!("{}",err);vec![]},
+    };
+    let pubmusiclist:Vec<Vec<crate::CardList>>=
+    publicmusiclist
+    .chunks(2)
+    .map(|chunk| {
+        let vec1:CardList=CardList{music:chunk[0].name.clone().into(),user:chunk[0].user.clone().into(),date:chunk[0].date.clone().into()};
+        if chunk.len()>1{
+            let vec2=CardList{music:chunk[1].name.clone().into(),user:chunk[1].user.clone().into(),date:chunk[1].date.clone().into()};
+            vec![vec1,vec2]
+        }
+        else{
+            vec![vec1]
+        }
+    }
+    )
+    .collect();
+    println!("{:#?}",pubmusiclist);
+    cargo_worker.send(SlintMessage::SetPubList(pubmusiclist)).unwrap();
 }
 

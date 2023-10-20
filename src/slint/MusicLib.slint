@@ -3,6 +3,7 @@ import {
     LineEdit, ListView, GroupBox, CheckBox, TabWidget
 } from "std-widgets.slint";
 import { musiclistdata } from "list.slint";
+import { MusicCardList,CardList } from "card.slint";
 export component Upload{ 
     in-out property <string> music-name;
     callback upload(string,bool);
@@ -75,8 +76,9 @@ export component ChooseMusic{
     in-out property <bool>is-choose;
     in-out property <musiclistdata>othermusicdata;
     callback tryplay(musiclistdata);
+    callback cancel-tryplay();
     callback collect(musiclistdata);
-
+    in-out property <bool>is-playering;
     Rectangle {
         width: 300px;
         height: 200px;
@@ -99,11 +101,24 @@ export component ChooseMusic{
         Button {
             x: parent.width*0.8;
             text: "试听";
-            clicked => {tryplay({
+            visible: !is-playering;
+            clicked => {
+                tryplay({
                 user:othermusicdata.user,
                 name:othermusicdata.name,
                 date:othermusicdata.date
-            })}
+            });
+            is-playering=true;
+        }
+        }
+        Button {
+            x: parent.width*0.8;
+            text: "取消";
+            visible: is-playering;
+            clicked => {
+            cancel-tryplay();
+            is-playering=false;
+        }
         } 
         Button {
             text: "返回";
@@ -114,39 +129,48 @@ export component ChooseMusic{
 }
 
 export component PublicMusicList {
+    
     in-out property <bool>is-choose;
+    in-out property <bool>is-playering;
     in-out property <musiclistdata>othermusicdata;
     callback tryplay(musiclistdata);
+    callback cancel-tryplay();
     callback collect(musiclistdata);
-    in-out property <[{user:string,name:string,date:string,public:bool}]> publicmusic;
-            ListView {
-            for data in publicmusic: Rectangle {
-                listtouch:=TouchArea{
-                    clicked => {is-choose=true;
-                        othermusicdata={
-                        user:data.user,
-                        name:data.name,
-                        date:data.date
-                    };}
-                }
-            height: 40px;
-            width: parent.width;
+    in-out property <[{cards:[CardList]}]> cards;
+    MusicCardList{
+        height: 100%;
+        width: 100%;
+        cards:cards;
+    }
+//     in-out property <[{user:string,name:string,date:string,public:bool}]> publicmusic;
+//             ListView {
+//             for data in publicmusic: Rectangle {
+//                 listtouch:=TouchArea{
+//                     clicked => {is-choose=true;
+//                         othermusicdata={
+//                         user:data.user,
+//                         name:data.name,
+//                         date:data.date
+//                     };}
+//                 }
+//             height: 40px;
+//             width: parent.width;
            
-            Text {
-                function textss(text:string) ->string{
+//             Text {
+//                 function textss(text:string) ->string{
                     
-                    return text+" || 上传者:"+data.user+" || 日期:"+data.date;
-                }
-                //x: 0;
-                text: textss(data.name);
+//                     return text+" || 上传者:"+data.user+" || 日期:"+data.date;
+//                 }
+//                 //x: 0;
+//                 text: textss(data.name);
 
-                color: listtouch.has-hover?#8d8d8d:#ffffff;
-                animate color { 
-                    duration:200ms;
-                 }
-            }
-        }
-}
+//                 color: listtouch.has-hover?#8d8d8d:#ffffff;
+//                 animate color { 
+//                     duration:200ms;
+//                  }
+//             }
+//         }
+//}
     animated := Rectangle {
         width: parent.width; height: parent.height;
         y: parent.height;
@@ -167,7 +191,9 @@ export component PublicMusicList {
             width: parent.width;
             height: parent.height;
             othermusicdata<=>root.othermusicdata;
+            is-playering<=>root.is-playering;
             tryplay => {tryplay(self.othermusicdata)}
+            cancel-tryplay => {cancel-tryplay()}
             collect => {collect(self.othermusicdata)}
         }
     }
@@ -176,6 +202,7 @@ export component MusicLib {
     in-out property <string> music-name;
     callback upload(string,bool);
     callback tryplay(musiclistdata);
+    callback cancel_tryplay();
     callback refresh();
     callback collect(musiclistdata);
 
@@ -183,7 +210,7 @@ export component MusicLib {
     in-out property <bool>is-uploading;
     in-out property <bool> is-public;
     in-out property <[{user:string,name:string,date:string,public:bool}]> publicmusic;
-
+    in-out property <[{cards:[CardList]}]> cards;
     TabWidget {
         Tab{
             title: "公开音乐";
@@ -210,7 +237,8 @@ export component MusicLib {
                 visible: !is-uploading;
                 width:100%;
                 height:100%;
-                publicmusic<=>publicmusic;
+                cards: cards;
+                //publicmusic<=>publicmusic;
                 tryplay => {
                     root.othermusicdata=self.othermusicdata;
                     tryplay(self.othermusicdata);
@@ -219,6 +247,7 @@ export component MusicLib {
                     root.othermusicdata=self.othermusicdata;
                     collect(self.othermusicdata);
                 }
+                cancel-tryplay => {cancel-tryplay()}
                 
             }
         }

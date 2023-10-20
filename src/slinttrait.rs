@@ -5,14 +5,17 @@ use crate::{AppWindow,env::{self, AVATAR}};
 use futures::future::{Fuse,FutureExt};
 use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel, Image, SharedPixelBuffer, Rgba8Pixel};
 use std::rc::Rc;
+use crate::CardList;
 use std::str::FromStr;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
 #[derive(Debug)]
 pub enum SlintMessage {
     Quit,
-    SetValue(String,String,Option<Vec<(slint::SharedString, slint::SharedString, bool, slint::SharedString)>>),
-    Test(String),
+    SetValue(String,String),
+    SetAvatar(String),
+    SetList(String,Vec<(slint::SharedString, slint::SharedString, bool, slint::SharedString)>),
+    SetPubList(Vec<Vec<CardList>>),
 }
 
 #[derive(Debug)]
@@ -70,17 +73,57 @@ async fn cargo_worker_loop(
 
         match m {
             SlintMessage::Quit => return Ok(()),
-            SlintMessage::SetValue(function,Value,List) =>
-            trait_set.set(set_value(handle.clone(),function,Value,List).fuse()),
-            SlintMessage::Test(string)=>
-            {set_playing(handle.clone(),string).fuse().await;return Ok(())},
+            SlintMessage::SetValue(function,Value) =>
+            trait_set.set(set_value(handle.clone(),function,Value).fuse()),
+            SlintMessage::SetAvatar(avaterpath)=>{
+                set_avatar(handle.clone(),avaterpath).fuse().await;
+                return Ok(())
+            },
+            SlintMessage::SetList(function,list)=>{
+                set_list(handle.clone(),function,list).fuse().await;
+            },
+            SlintMessage::SetPubList(cardlist)=>{
+                set_pub_list(handle.clone(),cardlist).fuse().await;
+            }
     }
 }
 }
-async fn set_value(handle: slint::Weak<AppWindow>,function:String,value:String,list:Option<Vec<(slint::SharedString, slint::SharedString, bool, slint::SharedString)>>){
-    let mut model: Arc<Rc<dyn Model<Data = (SharedString,SharedString, bool, SharedString)>>>;
-    
-    
+async fn set_pub_list(handle: slint::Weak<AppWindow>,cardlist:Vec<Vec<CardList>>){
+    handle
+    .clone()
+    .upgrade_in_event_loop(move |h| {
+        let mut cardlists:Vec<(ModelRc<CardList>,)>=vec![];
+        for card in cardlist{
+            let card:ModelRc<CardList>=ModelRc::new(VecModel::from(card));
+            let card:(ModelRc<CardList>,)=(card,);
+            cardlists.push(card);
+        }
+        let cardlist:ModelRc<(ModelRc<CardList>,)>=ModelRc::new(VecModel::from(cardlists));
+        h.set_cards(cardlist);
+    }).unwrap();
+}
+async fn set_list(handle: slint::Weak<AppWindow>,function:String,list:Vec<(slint::SharedString, slint::SharedString, bool, slint::SharedString)>){
+    handle
+    .clone()
+    .upgrade_in_event_loop(move |h| {
+        match function.as_str(){
+            "set_musiclist" => {
+                 println!("list{:?}",list.clone());
+                 let mut musiclistrc1: ModelRc<(slint::SharedString, slint::SharedString, bool, slint::SharedString)> =
+                     ModelRc::new(VecModel::from(list));
+                 h.set_musiclist(musiclistrc1);
+             },
+             "set_publicmusic" => {
+                  println!("list{:?}",list.clone());
+                  let musiclistrc1: ModelRc<(slint::SharedString, slint::SharedString, bool, slint::SharedString)> =
+                      ModelRc::new(VecModel::from(list));
+                  h.set_publicmusic(musiclistrc1);
+              },
+              &_ => todo!(),
+        }
+    }).unwrap();
+}
+async fn set_value(handle: slint::Weak<AppWindow>,function:String,value:String){
     handle
         .clone()
         .upgrade_in_event_loop(move |h| {
@@ -107,44 +150,7 @@ async fn set_value(handle: slint::Weak<AppWindow>,function:String,value:String,l
                     }
                 },
                 "set_avatar_path" => h.set_avatar_path(value.into()),
-                "set_musiclist" => {
-                   let list:Vec<(slint::SharedString, slint::SharedString, bool, slint::SharedString)>= match list {
-                        Some(list) =>list,
-                        None => todo!(),
-                    };
-                    println!("list{:?}",list.clone());
-                    let mut musiclistrc1: ModelRc<(slint::SharedString, slint::SharedString, bool, slint::SharedString)> =
-                        ModelRc::new(VecModel::from(list));
-                    h.set_musiclist(musiclistrc1);
-                },
-                "set_publicmusic" => {
-                    let list:Vec<(slint::SharedString, slint::SharedString, bool, slint::SharedString)>= match list {
-                         Some(list) =>list,
-                         None => todo!(),
-                     };
-                     println!("list{:?}",list.clone());
-                     let mut musiclistrc1: ModelRc<(slint::SharedString, slint::SharedString, bool, slint::SharedString)> =
-                         ModelRc::new(VecModel::from(list));
-                     h.set_publicmusic(musiclistrc1);
-                 },
-                 "set_avatar"=>{
-                    let image = match Image::load_from_path(Path::new(&value)){
-                        Ok(image) => image,
-                        Err(_) =>{
-                            let mut cat_image = image::load_from_memory(AVATAR).expect("err").into_rgba8();
-                            image::imageops::colorops::brighten_in_place(&mut cat_image, 20);
-                        
-                            let buffer = SharedPixelBuffer::<Rgba8Pixel>::clone_from_slice(
-                                cat_image.as_raw(),
-                                cat_image.width(),
-                                cat_image.height(),
-                            );
-                            Image::from_rgba8(buffer)
-                        },
-                    };
-                    h.set_user_avatar(image);
-                    
-                 },
+
                 &_ => todo!(),
             }
             // let code =format!("h.{}(SharedString::from({}))",function, value);
@@ -178,6 +184,7 @@ async fn set_avatar(handle: slint::Weak<AppWindow>,avaterpath:String){
             let image = Image::from_rgba8(buffer);
 
             h.set_user_avatar(image);
+            println!("change avatar");
         })
         .unwrap();
 }

@@ -38,7 +38,7 @@ pub fn main(ui:&AppWindow,slintsender:Arc<SlintSender>){
     });
     ui.on_test(move|value|{
         let cargo_channel = slintsender.channel.clone();
-        cargo_channel.send(SlintMessage::Test("name".to_owned())).unwrap();
+       // cargo_channel.send(SlintMessage::Test("name".to_owned())).unwrap();
     });
 }
 

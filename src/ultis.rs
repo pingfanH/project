@@ -36,3 +36,12 @@ pub fn musicplay(stream:&[u8]){
     sink.append(source);
     sink.sleep_until_end();
 }
+
+pub fn split_vec<T: std::cmp::Ord>(vec:Vec<T>,start:T)->Vec<Vec<T>>{
+    let mut front=vec;
+    let split=front.binary_search(&start).unwrap();
+    
+    let back = front.split_off(split);
+    vec![front,back]
+}
+

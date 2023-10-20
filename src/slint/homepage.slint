@@ -4,33 +4,58 @@ import {
 } from "std-widgets.slint";
 
 export component homepage{ 
-    callback open-url(string);
+    callback open-url();
     callback test();
+    in-out property <string> url;
     Button {
-        text: "text";
+        text: "测试";
         clicked => {root.test()}
         y:0;
     }
-            Image {
-               source: @image-url("../assets/icon/icon.png");
-               width: 100px;
-               x: 70px;
-               y: 170px;
-               TouchArea { clicked => { root.open-url("https://github.com"); } }
-            }
-            Text {
-                text:"P-LAYER";
-                x: 190px;
-                y: 187px;
-                font-size: 60px;
-                TouchArea { clicked => { root.open-url("https://github.com"); } }
-            }
-            Text {
-                text:"#made by pingfanh";
-                x: 140px;
-                y: 300px;
-                font-size: 30px;
-                TouchArea { clicked => { root.open-url("https://github.com"); } }
-            }
+    Image {
+        source: @image-url("../assets/icon/icon.png");
+        width: 100px;
+        x: 70px;
+        y: 50px;
+        TouchArea { clicked => {root.url="http://www.p-layer.top"; root.open-url(); } }
+    }
+    Text {
+        text:"P-LAYER";
+        x: 190px;
+        y: 70px;
+        font-size: 60px;
+        TouchArea { clicked => { root.url="http://www.p-layer.top"; root.open-url(); } }
+    }
+    Text {
+        text:"#made by pingfanh";
+        x: 140px;
+        y: 160px;
+        font-size: 30px;
+        TouchArea { clicked => { root.url="http://www.pingfanh.top"; root.open-url(); } }
+    }
+    Image {
+        source: @image-url("../assets/icon/github.svg");
+        width: 40px;
+        x: 60px;
+        y: 230px;
+        colorize: #e6e6e6;
+        TouchArea { clicked => {root.url="https://github.com/pingfanH/"; root.open-url(); } }
+    }
+    Image {
+        source: @image-url("../assets/icon/twitter.svg");
+        width: 40px;
+        x: 140px;
+        y: 234px;
+        colorize: #e6e6e6;
+        TouchArea { clicked => {root.url="https://twitter.com/PingfanH"; root.open-url(); } }
+    }
+    Image {
+        source: @image-url("../assets/icon/bilibili.svg");
+        width: 40px;
+        x: 220px;
+        y: 234px;
+        colorize: #e6e6e6;
+        TouchArea { clicked => {root.url="https://space.bilibili.com/485727024"; root.open-url(); } }
+    }
 
 }
