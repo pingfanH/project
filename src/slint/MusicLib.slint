@@ -4,6 +4,7 @@ import {
 } from "std-widgets.slint";
 import { musiclistdata } from "list.slint";
 import { MusicCardList,CardList } from "card.slint";
+import { PlayListGrid,PlayList } from "playlist.slint";
 export component Upload{ 
     in-out property <string> music-name;
     callback upload(string,bool);
@@ -75,6 +76,7 @@ export component Upload{
 export component ChooseMusic{
     in-out property <bool>is-choose;
     in-out property <musiclistdata>othermusicdata;
+    in-out property <string> id;
     callback tryplay(musiclistdata);
     callback cancel-tryplay();
     callback collect(musiclistdata);
@@ -91,7 +93,7 @@ export component ChooseMusic{
         Text {y:10px;text: choose-name(othermusicdata.name);}
         Button {
             x: 0;
-            text: "加入列表";
+            text: "收藏";
             clicked => {collect({
                 user:othermusicdata.user,
                 name:othermusicdata.name,
@@ -138,39 +140,16 @@ export component PublicMusicList {
     callback collect(musiclistdata);
     in-out property <[{cards:[CardList]}]> cards;
     MusicCardList{
+        visible: !is-choose;
         height: 100%;
         width: 100%;
         cards:cards;
+        choose-music => {
+            is-choose=true;
+            othermusicdata=self.othermusic;
+        }
     }
-//     in-out property <[{user:string,name:string,date:string,public:bool}]> publicmusic;
-//             ListView {
-//             for data in publicmusic: Rectangle {
-//                 listtouch:=TouchArea{
-//                     clicked => {is-choose=true;
-//                         othermusicdata={
-//                         user:data.user,
-//                         name:data.name,
-//                         date:data.date
-//                     };}
-//                 }
-//             height: 40px;
-//             width: parent.width;
-           
-//             Text {
-//                 function textss(text:string) ->string{
-                    
-//                     return text+" || 上传者:"+data.user+" || 日期:"+data.date;
-//                 }
-//                 //x: 0;
-//                 text: textss(data.name);
 
-//                 color: listtouch.has-hover?#8d8d8d:#ffffff;
-//                 animate color { 
-//                     duration:200ms;
-//                  }
-//             }
-//         }
-//}
     animated := Rectangle {
         width: parent.width; height: parent.height;
         y: parent.height;
@@ -205,12 +184,15 @@ export component MusicLib {
     callback cancel_tryplay();
     callback refresh();
     callback collect(musiclistdata);
-
+    callback new-play-list();
+    callback init-play-list();
+    callback init_collect();
     in-out property <musiclistdata>othermusicdata;
     in-out property <bool>is-uploading;
     in-out property <bool> is-public;
-    in-out property <[{user:string,name:string,date:string,public:bool}]> publicmusic;
+    in-out property <[{user:string,name:string,date:string,public:bool,id:string}]> publicmusic;
     in-out property <[{cards:[CardList]}]> cards;
+    in-out property <[{cards:[PlayList]}]> playlistcards;
     TabWidget {
         Tab{
             title: "公开音乐";
@@ -238,7 +220,6 @@ export component MusicLib {
                 width:100%;
                 height:100%;
                 cards: cards;
-                //publicmusic<=>publicmusic;
                 tryplay => {
                     root.othermusicdata=self.othermusicdata;
                     tryplay(self.othermusicdata);
@@ -253,6 +234,15 @@ export component MusicLib {
         }
         Tab{
              title: "我的歌单";
+             PlayListGrid{
+                height: 100%;
+                width: 100%;
+                new-play-list => {root.new-play-list()}
+                cards<=>playlistcards;
+                init-play-list => {root.init-play-list()}
+                init_collect=>{root.init_collect()}
+             }
+             
         }
     }
    

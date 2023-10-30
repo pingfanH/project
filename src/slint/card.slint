@@ -1,15 +1,18 @@
 import {
     ListView,ScrollView,VerticalBox
 , GridBox} from "std-widgets.slint";
+import { musiclistdata } from "list.slint";
 export struct CardList {
-    music:string,user:string,date:string
+    music:string,user:string,date:string,id:string
 }
 
 export component MusicCard {
-    in-out property <string> music;
+    in-out property <musiclistdata> othermusic;
     in-out property <string> user;
+    in-out property <string> music;
     in-out property <string> date;
-    callback choose-music(string,string,string);
+    in-out property <string> id;
+    callback choose-music();
     Rectangle{
         Image{
             y:2px;
@@ -19,7 +22,7 @@ export component MusicCard {
             width: 30px;
         }
         TouchArea {
-            clicked => {choose-music(music,user,date)}
+            clicked => {othermusic={name:music,user:user,date:date,id:id};choose-music()}
         }
         Text{
             y:2px;
@@ -44,6 +47,8 @@ export component MusicCard {
 }
 export component MusicCardList {
     in-out property <[{cards:[CardList]}]> cards;
+    in-out property <musiclistdata> othermusic;
+    callback choose-music();
     ListView {
             for card in cards:HorizontalLayout{
                 padding: 10px;
@@ -53,6 +58,8 @@ export component MusicCardList {
                 user:tcard.user;
                 music:tcard.music;
                 date:tcard.date;
+                id:tcard.id;
+                choose-music=>{othermusic=self.othermusic;choose-music()}
             }}
         
     }

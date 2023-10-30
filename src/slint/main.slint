@@ -9,6 +9,7 @@ import { SettingValue,UserSetting } from "user.slint";
 import { Login,SignData } from "Login.slint";
 import { musiclistdata } from "list.slint";
 import { CardList } from "card.slint";
+import { play_list_values,PlayList } from "playlist.slint";
 export struct UserSettingData {
     name:string,
     gender:string,
@@ -73,7 +74,8 @@ export component setvolume {
 export component player{
     callback music_play();
     callback music-pause();
-    
+    callback music-last-next();
+    in-out property <string> last-next;
     Rectangle {
         background: #4d4d4d81;
     }
@@ -157,6 +159,28 @@ export component player{
         y: parent.height/3.2;
         x: parent.width*0.8;
     }
+    Image {
+        y: parent.height/3.5;
+        x: parent.width*0.6;
+        width: 40px;
+        source: @image-url("../assets/icon/next.svg"); 
+        colorize: #ffffff;
+        TouchArea {clicked => {
+            last-next="next";
+            music-last-next()
+        }}
+    }
+    Image {
+        y: parent.height/3.5;
+        x: parent.width*0.37;
+        width: 40px;
+        source: @image-url("../assets/icon/last.svg"); 
+        colorize: #ffffff;
+        TouchArea {clicked => {
+            last-next="last";
+            music-last-next()
+        }}
+    }
 }
 
 export component search{
@@ -239,7 +263,10 @@ export component AppWindow inherits Window {
     callback refresh();
     callback setvolume(int);
     callback cancel-tryplay();
-
+    callback music-last-next(string);
+    callback new-play-list(string,string,bool);
+    callback init-play-list(string);
+    callback init_collect();
     in-out property <string> user_name:"用户114514";
     in-out property <string> user_intro:"未登录";
     in-out property <string> user_gender:"未登录";
@@ -252,10 +279,12 @@ export component AppWindow inherits Window {
     in-out property <bool> is-login:false;
     in-out property <bool> show-list<=>values.show-list;
     in-out property <image> user-avatar;
+    in-out property <[musiclistdata]> play-list-content<=>play-list-values.play-list-music;
 
-    in-out property <[{user:string,name:string,date:string,public:bool}]> musiclist;
-    in-out property <[{user:string,name:string,date:string,public:bool}]> publicmusic;
+    in-out property <[{user:string,name:string,date:string,public:bool,id:string}]> musiclist;
+    in-out property <[{user:string,name:string,date:string,public:bool,id:string}]> publicmusic;
     in-out property <[{cards:[CardList]}]> cards;
+    in-out property <[{cards:[PlayList]}]> playlistcards;
     in-out property <string>avatar-path;
 
     in-out property <string> account;
@@ -325,66 +354,75 @@ export component AppWindow inherits Window {
         close-window();
         }
     }
-    HorizontalLayout {
-        visible: root.is-login;
-        side-bar := SideBar {
-            title: @tr("P-layer");
-            model: [@tr("Menu" => "主页"), @tr("Menu" => "音乐库"), @tr("Menu" => "我的"), @tr("Menu" => "设置")];
-            click-audio=>{root.click-audio()}
-        }
+    VerticalLayout {
+        HorizontalLayout {
+            visible: root.is-login;
 
-        if(side-bar.current-item == 0) : homepage {
+            side-bar := SideBar {
+                title: @tr("P-layer");
+                model: [@tr("Menu" => "主页"), @tr("Menu" => "音乐库"), @tr("Menu" => "我的"), @tr("Menu" => "设置")];
+                click-audio=>{root.click-audio()}
+            }
+    
+            if(side-bar.current-item == 0) : homepage {
+                
+                test => {root.test("123")}
+                width: 500px;
+                open-url=>{root.open_the_url(self.url)}
             
-            test => {root.test("123")}
-            width: 500px;
-            open-url=>{root.open_the_url(self.url)}
-        
+            }
+            if(side-bar.current-item == 1) : MusicLib {
+                width: 500px;
+                playlistcards<=>playlistcards;
+                upload => {root.musicupload(self.music-name,self.is-public)}
+                tryplay => {root.tryplay(self.othermusicdata)}
+                cancel-tryplay => {root.cancel-tryplay()}
+                collect => {root.collect(self.othermusicdata)}
+                publicmusic<=>root.publicmusic;
+                cards<=>root.cards;
+                refresh=>{root.refresh();}
+                new-play-list => {root.new-play-list(play-list-values.new-play-list-name,play-list-values.new-play-list-intro,play-list-values.new-play-list-public)}
+                init-play-list=>{root.init-play-list(play-list-values.play-list-data.id)}
+                init_collect=>{root.init_collect()}
+            }
+            if(side-bar.current-item == 2) : user-main {
+                width: 500px;
+                user-id:root.user-id;
+                user-name:root.user_name;
+                user-intro:root.user_intro;
+                user-gender:root.user_gender;
+                user-age:root.user_age;
+                user-music-number:root.user_music_number;
+                user-sign-date: root.user-sign-date;
+                click_audio=>{root.click_audio();}
+                click_audio1=>{root.click_audio1();}
+                apply=>{root.apply({
+                    name:self.setting-user-name,
+                    gender:self.setting-user-gender,
+                    age:self.setting-user-age,
+                    intro:self.setting-user-intro,
+                    avatar-path:self.avatar-path
+                });}
+                set-avatar => {root.choose-avatar()}
+                avatar-path:root.avatar-path;
+                user-avatar:root.user-avatar;
+            }
+            if(side-bar.current-item == 3) : setting {width: 500px;}
+            // if(side-bar.current-item == 4) : AboutPage {}
         }
-        if(side-bar.current-item == 1) : MusicLib {
-            width: 500px;
-            upload => {root.musicupload(self.music-name,self.is-public)}
-            tryplay => {root.tryplay(self.othermusicdata)}
-            cancel-tryplay => {root.cancel-tryplay()}
-            collect => {root.collect(self.othermusicdata)}
-            publicmusic<=>root.publicmusic;
-            cards<=>root.cards;
-            refresh=>{root.refresh();}
-        }
-        if(side-bar.current-item == 2) : user-main {
-            width: 500px;
-            user-id:root.user-id;
-            user-name:root.user_name;
-            user-intro:root.user_intro;
-            user-gender:root.user_gender;
-            user-age:root.user_age;
-            user-music-number:root.user_music_number;
-            user-sign-date: root.user-sign-date;
-            click_audio=>{root.click_audio();}
-            click_audio1=>{root.click_audio1();}
-            apply=>{root.apply({
-                name:self.setting-user-name,
-                gender:self.setting-user-gender,
-                age:self.setting-user-age,
-                intro:self.setting-user-intro,
-                avatar-path:self.avatar-path
-            });}
-            set-avatar => {root.choose-avatar()}
-            avatar-path:root.avatar-path;
-            user-avatar:root.user-avatar;
-        }
-        if(side-bar.current-item == 3) : setting {width: 500px;}
-        // if(side-bar.current-item == 4) : AboutPage {}
+        player{
+            visible: root.is-login;
+            x:0px;
+            padding-bottom: 0;
+            height: 110px;
+           // y:parent.height -130px;
+            preferred-width: parent.width;
+            music_play=>{root.music-play()}
+            music-pause => {root.music-pause()}
+            music-last-next => {music-last-next(self.last-next)}
+        }  
     }
-    player{
-        visible: root.is-login;
-        x:20px;
-        y:parent.height -130px;
-        preferred-width: parent.width -37px;
-        preferred-height: 110px;
-        music_play=>{root.music-play()}
-        music-pause => {root.music-pause()}
-        
-    }
+
     animated := Rectangle {
         property <length> width-:400px;
         property <length> height-:10px;
@@ -414,6 +452,7 @@ export component AppWindow inherits Window {
             close=>{show-list=false;click-audio()}
             background: #000000;
             musiclist:root.musiclist;
+            
         }
     }
     animated1 :=Rectangle{

@@ -5,20 +5,24 @@ use std::fmt::format;
 use std::time::Duration;
 use futures::io::empty;
 use rodio::decoder;
+use serde_json::Value;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender, UnboundedReceiver};
 use rodio::{Decoder, OutputStream, Sink, source::Source};
 use std::sync::{Arc, Mutex};
 
 use crate::env::APP_PATH;
+use crate::ultis;
 
 #[derive(Debug)]
 pub enum MusicMessage {
+    None,
     Play,
     Pause,
     ChangeMusic(String),
     ChangeVolume(i32),
     TryPlay(Vec<u8>),
     CancelTryPlayer(),
+    MusicNext(String),
 }
 
 pub struct MusicPlayer {
@@ -49,8 +53,8 @@ async fn music_player_loop(mut r: UnboundedReceiver<MusicMessage>) -> Result<(),
 
 
     let music_list=crate::file_lib::readfilenameloop(&format!("{}data/musiclist/", crate::env::APP_PATH)).await;
-    for i in music_list{
-        let name=format!("{}{}{}",i.user,i.name,i.date);
+    for id in music_list{
+        let name=id;
         let filename=format!("{}data/music/{}", crate::env::APP_PATH,name);
         if let Ok(file)=File::open(&filename){
             println!("append music:{}",&filename);
@@ -63,20 +67,15 @@ async fn music_player_loop(mut r: UnboundedReceiver<MusicMessage>) -> Result<(),
     sink.pause();
     let try_player_sink = Sink::try_new(&stream_handle)?;
 
-    
-    // 创建音频播放器);
-    
 
    
    let mut music_playing = false;
    let mut current_music = String::new();
-
    loop {
        let m = match r.recv().await {
            Some(m) => m,
-           None => break,
+           None =>break,
        };
-
        match m {
             MusicMessage::Play => {
                if !music_playing {
@@ -96,35 +95,21 @@ async fn music_player_loop(mut r: UnboundedReceiver<MusicMessage>) -> Result<(),
             MusicMessage::ChangeMusic(path) => {
                 
                 
-                let music_list=crate::file_lib::readfilenameloop(&format!("{}data/musiclist/", crate::env::APP_PATH)).await;
-                println!("{music_list:#?}");
-                let mut musiclistvec:Vec<String>=vec![];
-                for i in music_list{
-                    let name=format!("{}{}{}",i.user,i.name,i.date);
-                    musiclistvec.push(name);
-                }
-                
-                let mut music_list=crate::ultis::split_vec(musiclistvec,path);
-                
-                let mut music_list1:Vec<String>=vec![];
-                music_list1.append(&mut music_list[1]);
-                music_list1.append(&mut music_list[0]);
-                println!("{music_list1:?}");
+                let music_list=crate::file_lib::readfile(&format!("{}data/musiclist/data.json", crate::env::APP_PATH)).await.unwrap();
+                let music_list:Vec<Value>=serde_json::from_str(&music_list).unwrap();
+                let mut is_find_targe=false;
+                println!("music_list:{music_list:#?}");
                 sink.stop();
                 sink.pause();
-                music_playing=true;
-                for i in music_list1{
-                    let filename=format!("{}data/music/{}", crate::env::APP_PATH,i);
-                    if let Ok(file)=File::open(&filename){
-                        println!("append music:{}",&filename);
-                        let source=Decoder::new(file).unwrap();
-                        sink.append(source);
-                    }else{
-                        println!("can not append music:{}",&filename);
-                    }
+                current_music=path.clone();
+                let filename=format!("{}data/music/{}", crate::env::APP_PATH,path);
+                
+                if let Ok(file)=File::open(&filename){
+                    let source=Decoder::new(file).unwrap();
+                    sink.append(source);
                 }
+                music_playing=true;
                 sink.play();
-
             }
             MusicMessage::ChangeVolume(new_volume) => {
                 let volume=new_volume as f32;
@@ -142,11 +127,16 @@ async fn music_player_loop(mut r: UnboundedReceiver<MusicMessage>) -> Result<(),
             },
             MusicMessage::CancelTryPlayer()=>{
                 try_player_sink.stop();
+            },
+            MusicMessage::MusicNext(last_next)=>{
+
+            },
+            MusicMessage::None=>{
+
             }
         }
 
     }
-
     Ok(())
 }
 

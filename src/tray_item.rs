@@ -64,18 +64,17 @@ pub async fn tray_item_run(hanel_close:Weak<AppWindow>,ui:&AppWindow,musicplayer
                 }
                 Ok(Message::LogOff) => {
                     println!("Logoff");
-                    ultis::delete_folder_contents(&format!("{}cookies",APP_PATH)).unwrap();
+                    ultis::delete_folder_contents(&format!("{}cookies",APP_PATH));
                     hanel_close.upgrade().unwrap().hide().unwrap();
                     let cargoworkerarc=slint_sender_arc.clone();
                     let musicplayerarc=musicplayerarc.clone();
                     ui::apprun(&ui,musicplayerarc,cargoworkerarc).await;  
                 }
                 Ok(Message::Play) => {
-                    
-                    musicplayerarc.channel.send(musicplayer::MusicMessage::Play).unwrap();
+                    musicplayerarc.channel.send(musicplayer::MusicMessage::Play);
                 }
                 Ok(Message::Pause) => {
-                    musicplayerarc.channel.send(musicplayer::MusicMessage::Pause).unwrap();
+                    musicplayerarc.channel.send(musicplayer::MusicMessage::Pause);
                 }
                 Ok(Message::Run) => {
                     let cargoworkerarc=slint_sender_arc.clone();

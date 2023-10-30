@@ -20,17 +20,20 @@ open = "5.0.0"
 tokio = { version = "1.12.0", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-#device_query = "1.1.3"
 regex="*"
-#systray="*"
 futures = "0.3"
 rfd="*"
 eval = "0.4.3"
 dotenv = "0.15.0"
 image="*"
+ncm_parser = {version="0.4.1",path="D:\\BIN\\rust_crates\\ncm_parser"}
+
+
 [target.'cfg(windows)'.build-dependencies]
 dotenv = "0.15"
 windres = "*"
 slint-build = "1.2.2"
+
+
 [build]
 run = "dotenv::dotenv().ok();"

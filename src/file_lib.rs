@@ -74,7 +74,7 @@ pub async fn read_cookie(name:&str)-> Result<String, String>{
     }
 }
 
-pub async fn readfilenameloop(path:&str)->Vec<MusicList>{
+pub async fn readfilenameloop(path:&str)->Vec<String>{
     let mut jsonlist:Vec<MusicList>=vec![];
     let folder_path = Path::new(path);
     let mut lists:Vec<String>=vec![];
@@ -101,14 +101,14 @@ pub async fn readfilenameloop(path:&str)->Vec<MusicList>{
         println!("文件夹不存在");
     }
 
-    for list in lists {
-        println!("list:{}",list);
-        let list:Vec<&str>=list.split(",").collect();
-        let musicdata:MusicList=MusicList { user: list[0].to_owned(), name: list[1].to_owned(), date: list[2].to_owned(), public: str2bool(list[3]).unwrap() };
-        jsonlist.push(musicdata);
+    // for list in lists {
+    //     println!("list:{}",list);
+    //     let list:Vec<&str>=list.split(",").collect();
+    //     let musicdata:MusicList=MusicList { user: list[0].to_owned(), name: list[1].to_owned(), date: list[2].to_owned(), public: str2bool(list[3]).unwrap() };
+    //     jsonlist.push(musicdata);
 
-    };
-    jsonlist
+    // };
+    lists
 }
 
 //循环一个vec<Value>,当select和value的值在json中能对照时返回这些json:vec<Value>

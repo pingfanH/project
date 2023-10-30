@@ -23,9 +23,8 @@ pub async fn get(url: &str) -> Result<String, Error> {
     let body = response.text().await?;
     Ok(body)
 }
-pub async fn upload(path:&str,url:&str,user:&str,name:&str)->Result<(), Box<dyn std::error::Error>>{
-    
-    let url=format!("{}/{}/{}",url,user,name);
+pub async fn upload(path:&str,url:&str)->Result<String, Box<dyn std::error::Error>>{
+
     println!("{}",url);
     // 创建 HTTP 客户端
     let client = Client::new();
@@ -33,19 +32,18 @@ pub async fn upload(path:&str,url:&str,user:&str,name:&str)->Result<(), Box<dyn 
     // 读取二进制文件
     let file_content = fs::read(path)?;
     // 发送 POST 请求
-    client.post(url)
+    let post = client.post(url)
     .body(file_content)
     .send()
     .await;
     // 发送 POST 请求
-
+    let text=post.unwrap().text().await.unwrap();
     //println!("{:?}",response);
-    Ok(())
+    Ok(text)
 }
-pub async fn download(url:&str,user:&str,filename:&str,targe:&str)->String{
+pub async fn download(url:&str,targe:&str)->String{
     // 创建目标文件并写入内容
-   let url=format!("{}/{}/{}",url,user,filename);
-   let response = reqwest::get(&url).await.expect("Failed to send GET request");
+   let response = reqwest::get(url).await.expect("Failed to send GET request");
    let content = response.bytes().await.expect("Failed to retrieve response content");
     println!("targe:{}",targe);
    let mut target_file = File::create(targe).expect("Failed to create target file");

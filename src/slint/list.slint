@@ -7,7 +7,9 @@ import {
 export struct musiclistdata {
     user:string,
     name:string,
-    date:string
+    date:string,
+    id:string,
+    public:bool
 }
 
 component Pane inherits Rectangle {
@@ -24,8 +26,8 @@ export global ListValue {
     callback close();
     in-out property <musiclistdata>music-choosed;
     in-out property <bool> is-playing;
-    in-out property <[{user:string,name:string,date:string,public:bool}]> musiclist:[
-        { user:"2146265126",name: "ギターと孤独と蒼い惑星",public:true,date:"11"},
+    in-out property <[{user:string,name:string,date:string,public:bool,id:string}]> musiclist:[
+        { user:"2146265126",name: "ギターと孤独と蒼い惑星",date:"11"},
         { name: "Let_me_do_it_for_u"},
         { name: "桜高軽音部 - ふわふわ時間 (Single Ver.)"},
         { name: "めありー,Orangestar - Alice in 冷凍庫"},
@@ -42,8 +44,8 @@ export global ListValue {
             for data in  musiclist: Rectangle {
                 background: #000000;
                 listtouch:=TouchArea{
-                    clicked => {root.music-choosed={user:data.user,name:data.name,date:data.date};root.choose-music(
-                        {user:data.user,name:data.name,date:data.date}
+                    clicked => {root.music-choosed={id:data.id};root.choose-music(
+                        {id:data.id}
                         );close();is-playing=true;}
                 }
                 height: 30px;

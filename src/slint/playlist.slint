@@ -1,0 +1,233 @@
+import {
+    ListView,ScrollView,VerticalBox,LineEdit
+, GridBox, HorizontalBox, Button, Switch, CheckBox} from "std-widgets.slint";
+import { Pane } from "user.slint";
+import { musiclistdata } from "list.slint";
+import { CardList } from "card.slint";
+export struct PlayList {
+    user:string,date:string,id:string,intro:string,title:string
+}
+export component NewPlayList inherits Pane{
+    callback new-play-list();
+    property <string> intro;
+    in-out property <bool> is_public<=>play_list_values.new-play-list-public;
+    background: #1C1C1C;
+    Text {
+        text: "name";
+        font-size: 20px;
+        x:20px;
+        y:30px;
+    }
+    name:=LineEdit {
+        y:30px;  
+        edited => {play_list_values.new-play-list-name=self.text}
+    }
+    Text {
+        text: "intro";
+        font-size: 20px;
+        x:20px;
+        y:100px;
+    }
+    intro:=LineEdit {
+        y:100px;
+        edited => {play_list_values.new-play-list-intro=self.text}
+    }
+    is_public:=CheckBox {
+        text: "公开";
+        x:20px;
+        y:150px;
+        toggled => {
+            if (root.is_public){
+                root.is_public=false;
+            }else{
+                root.is_public=true;
+            }
+        }
+    }
+        Button {
+            text: "取消";
+            width: 100px;
+            x:parent.width*0.2;
+            clicked => {play_list_values.is-creating=false}
+        }
+        Button {
+            text: "创建";
+            width: 100px;
+            x:parent.width*0.6;
+            clicked => {
+                play_list_values.is-creating=false;
+                new-play-list();
+                name.text="";
+                intro.text="";
+            }
+        }
+    
+
+}
+export component PlayListCard {
+    in-out property <image> image:@image-url("../assets/icon/avatar.png");
+    in-out property <string> title:"name";
+    in-out property <string> intro:"introintrointrointrointro";
+    callback on_click();
+    Rectangle{
+        Image{
+            y:0;
+            x:0;
+            image-rendering: pixelated;
+            source: image;
+            width: 100px;
+        }
+        Text {
+            x:100px;
+            y:0;
+            font-size: 30px;
+            text: title;
+        }
+        
+        Text {
+          wrap: TextWrap.word-wrap;
+          y:40px;
+          x:120px;
+            width: 200px;
+            height: 60px;
+            text: intro;
+        }
+        TouchArea {
+            clicked => {on_click();}
+        }
+    }
+
+}
+export component PlayListMenu inherits Pane{
+
+    in-out property <[musiclistdata]> play-list-music;
+
+    background: #1C1C1C;
+    VerticalBox {
+        Button { 
+            clicked => {play_list_values.is-showing=false;}
+         }
+        ListView{
+            for data in  play-list-music: Rectangle {
+                background: #1C1C1C;
+                listtouch:=TouchArea{
+                    clicked => {}
+                }
+                height: 30px;
+                width: parent.width;
+                Text {
+                    x: 0;
+                    text: data.name;
+
+                    color: listtouch.has-hover?#8d8d8d:#ffffff;
+                    animate color { 
+                        duration:200ms;
+                     }
+                    
+                }
+        }
+    }
+}
+}
+export global play_list_values {
+    in-out property <bool> is-showing:false;
+    in-out property <bool> is-creating:false;
+    in-out property <[musiclistdata]> play-list-music;
+    in-out property <PlayList> play-list-data;
+
+    in-out property <string> new-play-list-name;
+    in-out property <string> new-play-list-intro;
+    in-out property <bool> new-play-list-public:false;
+
+}
+
+export component PlayListGrid {
+    in-out property <[{cards:[PlayList]}]> cards:[
+        {cards:[
+            {title:"hello",intro:"123"},
+            {title:"hello",intro:"123"}
+        ]},
+    ];
+    callback new-play-list();
+    callback init_play_list();
+    callback init_collect();
+    VerticalLayout {
+        HorizontalBox { 
+            x: 0px;
+            height: 130px;
+            PlayListCard{
+                image:@image-url("../assets/icon/add.png");
+                title:"新建歌单";
+                intro: "点击新建";
+                on-click => {play_list_values.is-creating=true;}
+            }
+            PlayListCard{
+                image:@image-url("../assets/icon/icon.png");
+                title:"我的收藏";
+                intro: "你收藏的全部歌曲";
+                on-click => {
+                    play_list_values.is-showing=true;
+                    init_collect()
+                }
+            }
+         }
+        ListView {
+                for card in cards:HorizontalLayout{
+                    height: 120px;
+                    for tcard in card.cards:PlayListCard{
+                        title: tcard.title;
+                        intro: tcard.intro;
+                        on-click => {play_list_values.is-showing=true;
+                            play_list_values.play-list-data=tcard;
+                            init_play_list()
+                        }
+                }}
+            
+        }
+    }
+    playlist:=Rectangle{
+        width: parent.width; height: parent.height;
+        x: parent.width;
+        states [
+            visible when (play_list_values.is-showing) : {
+                x: 0;
+            in  {
+                animate x { duration: 200ms; easing: ease; }
+            }
+            out  {
+                animate x { duration: 200ms; easing: ease; }
+            }
+            }
+        ]
+
+        if (playlist.y < root.height):PlayListMenu{
+            play-list-music:play_list_values.play-list-music;
+            width: 100%;
+            height: 100%;
+
+        }
+    }
+    newplaylist:=Rectangle{
+        width: parent.width; height: parent.height;
+        x: parent.width;
+        states [
+            visible when (play_list_values.is-creating) : {
+                x: 0;
+            in  {
+                animate x { duration: 200ms; easing: ease; }
+            }
+            out  {
+                animate x { duration: 200ms; easing: ease; }
+            }
+            }
+        ]
+
+        if (newplaylist.y < root.height):NewPlayList{
+            height: 100%;
+            width: 100%;
+            new-play-list => {root.new-play-list()}
+        }
+    }
+
+
+}

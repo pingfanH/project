@@ -17,4 +17,5 @@ pub struct MusicList {
     pub(crate) name: String,
     pub(crate) date: String,
     pub(crate) public: bool,
+    pub(crate) id: String,
 }
