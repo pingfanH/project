@@ -10,7 +10,7 @@ use reqwest::Client;
 //use serde_json::Value;
 
 pub async fn post(url:&str,body:&str){
-    println!("{:#?}",body);
+    //println!("{:#?}",body);
     let client = reqwest::Client::new();
     let _result=client.post(url)
         .body(reqwest::Body::from(body.to_string()))
@@ -25,7 +25,7 @@ pub async fn get(url: &str) -> Result<String, Error> {
 }
 pub async fn upload(path:&str,url:&str)->Result<String, Box<dyn std::error::Error>>{
 
-    println!("{}",url);
+   // println!("{}",url);
     // 创建 HTTP 客户端
     let client = Client::new();
 

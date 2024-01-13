@@ -54,11 +54,11 @@ pub async fn main(ui:&AppWindow,slint_sender:Arc<SlintSender>){
     match request_lib::get(url).await{
         Ok(play_lists) =>{
             let play_lists:Value=serde_json::from_str(&play_lists).unwrap();
-            println!("play_lists:{play_lists:#?}");
+            //println!("play_lists:{play_lists:#?}");
             let mut vec_play_list:Vec<PlayList>=vec![];
             let play_lists_array=play_lists.as_array().unwrap();
             for play_list in play_lists_array{
-                println!("play_list:{play_list:#?}");
+                //println!("play_list:{play_list:#?}");
                 let name=play_list["name"].to_string();
                 let user=play_list["user"].to_string();
                 let intro=play_list["intro"].to_string();
